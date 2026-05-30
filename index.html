@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#020810">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>JARVIS OS + MIND LAB v7.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --neon:#00d4ff;--g:#00ff88;--acc:#a855f7;--red:#ff4f6b;--gold:#ffd700;
+  --org:#ff9500;--pink:#ff4f9a;--bg:#020810;--txt:#c8e6f0;
+  --panel:rgba(0,212,255,0.025);--bdr:rgba(0,212,255,0.12);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif}
+#app{width:100vw;height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  background:radial-gradient(ellipse 80% 60% at 15% 50%,rgba(0,212,255,.06),transparent 70%),
+             radial-gradient(ellipse 60% 50% at 85% 20%,rgba(168,85,247,.05),transparent 70%),#020810}
+.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,212,255,.02) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,212,255,.02) 1px,transparent 1px);
+  background-size:52px 52px}
+.scanline{position:fixed;inset:0;pointer-events:none;z-index:998;opacity:.3;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px)}
+.corner{position:fixed;width:14px;height:14px;border-color:var(--neon);border-style:solid;opacity:.3;z-index:1000}
+.c-tl{top:6px;left:6px;border-width:1px 0 0 1px}.c-tr{top:6px;right:6px;border-width:1px 1px 0 0}
+.c-bl{bottom:6px;left:6px;border-width:0 0 1px 1px}.c-br{bottom:6px;right:6px;border-width:0 1px 1px 0}
+
+/* KEYFRAMES */
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes rotR{to{transform:rotate(-360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+@keyframes wave{0%,100%{height:3px}50%{height:18px}}
+@keyframes shpulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.07);opacity:1}}
+@keyframes neuron{0%{stroke-dashoffset:400;opacity:.15}50%{opacity:.9}100%{stroke-dashoffset:0;opacity:.15}}
+@keyframes mindpulse{0%,100%{filter:brightness(1) drop-shadow(0 0 4px #a855f7)}50%{filter:brightness(1.5) drop-shadow(0 0 18px #a855f7)}}
+@keyframes noteIn{from{opacity:0;transform:scale(.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes voiceIn{from{opacity:0;transform:translateY(28px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes threatAnim{0%,100%{background:rgba(255,79,107,.03)}50%{background:rgba(255,79,107,.14)}}
+@keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.06)}28%{transform:scale(1)}42%{transform:scale(1.04)}70%{transform:scale(1)}}
+@keyframes energyFlow{0%{stroke-dashoffset:100}100%{stroke-dashoffset:0}}
+@keyframes pinBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;
+  border-bottom:1px solid rgba(0,212,255,.1);background:rgba(0,0,0,.7);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:100;flex-shrink:0}
+.orb{width:30px;height:30px;position:relative;flex-shrink:0}
+.orb::before{content:'';position:absolute;inset:0;border:1px solid rgba(0,212,255,.55);border-radius:50%;animation:rot 6s linear infinite}
+.orb::after{content:'';position:absolute;inset:5px;border:1px solid rgba(0,212,255,.22);border-radius:50%;animation:rotR 4s linear infinite}
+.orb-c{position:absolute;inset:9px;background:rgba(0,212,255,.45);border-radius:50%;box-shadow:0 0 12px rgba(0,212,255,.8)}
+.brand{font-family:'Orbitron',monospace;font-size:clamp(11px,2.2vw,16px);font-weight:900;color:var(--neon);letter-spacing:3px;text-shadow:0 0 14px rgba(0,212,255,.8)}
+.brand-ml{font-size:clamp(8px,1.2vw,10px);color:var(--acc);letter-spacing:1.5px;margin-left:6px;font-weight:700}
+.brand-s{font-family:'Share Tech Mono',monospace;font-size:clamp(6px,1vw,8px);color:rgba(0,212,255,.35);letter-spacing:2px;margin-top:2px}
+.hs{text-align:center;min-width:40px}
+.hs-l{font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.25);letter-spacing:1px}
+.hs-v{font-family:'Share Tech Mono',monospace;font-size:9px}
+.clk{font-family:'Orbitron',monospace;font-size:clamp(12px,2vw,17px);color:var(--neon);letter-spacing:2px;line-height:1}
+.clk-d{font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(0,212,255,.35);letter-spacing:1px;text-align:right}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid rgba(0,212,255,.08);background:rgba(0,0,0,.5);
+  flex-shrink:0;overflow-x:auto;z-index:10;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 12px;cursor:pointer;font-size:clamp(8px,1.4vw,10px);letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(200,230,240,.3);border-bottom:2px solid transparent;transition:all .2s;
+  font-family:'Share Tech Mono',monospace;white-space:nowrap;user-select:none;flex-shrink:0}
+.tab:hover{color:var(--neon)}.tab.active{color:var(--neon);border-bottom-color:var(--neon);text-shadow:0 0 8px rgba(0,212,255,.5)}
+.tab.t-ml.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab.t-sec.active{color:var(--red);border-bottom-color:var(--red)}
+.tab.t-earth.active{color:var(--g);border-bottom-color:var(--g)}
+.tab.t-gm.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab.t-note.active{color:var(--pink);border-bottom-color:var(--pink)}
+
+/* LAYOUT */
+.main{flex:1;overflow:hidden;display:flex;position:relative;z-index:1}
+.panel{display:none;width:100%;height:100%;overflow:hidden}
+.panel.active{display:flex}
+
+/* GLASS */
+.gl{background:var(--panel);border:1px solid var(--bdr);border-radius:3px;position:relative;overflow:hidden}
+.gl::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.4),transparent);pointer-events:none}
+.gl-red{border-color:rgba(255,79,107,.14);background:rgba(255,79,107,.02)}
+.gl-red::before{background:linear-gradient(90deg,transparent,rgba(255,79,107,.4),transparent)}
+.gl-pur{border-color:rgba(168,85,247,.14);background:rgba(168,85,247,.02)}
+.gl-pur::before{background:linear-gradient(90deg,transparent,rgba(168,85,247,.4),transparent)}
+.gl-pink{border-color:rgba(255,79,154,.14);background:rgba(255,79,154,.02)}
+
+/* SIDEBAR */
+.sb{flex-shrink:0;border-right:1px solid rgba(0,212,255,.08);background:rgba(0,0,0,.3);
+  overflow-y:auto;overflow-x:hidden;padding:10px 9px;display:flex;flex-direction:column;gap:7px;-webkit-overflow-scrolling:touch}
+@media(max-width:640px){.sb{width:145px!important}.hm{display:none!important}}
+@media(max-width:420px){.sb{width:128px!important}.tab{padding:7px 8px;font-size:8px}}
+
+/* BUTTONS */
+.btn{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.28);color:var(--neon);
+  font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;letter-spacing:1px;
+  text-transform:uppercase;padding:7px 12px;cursor:pointer;transition:all .2s;border-radius:2px;white-space:nowrap}
+.btn:hover{background:rgba(0,212,255,.13);border-color:rgba(0,212,255,.6);box-shadow:0 0 14px rgba(0,212,255,.2)}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.on{background:rgba(0,212,255,.18);border-color:var(--neon);box-shadow:0 0 14px rgba(0,212,255,.3)}
+.btn-r{border-color:rgba(255,79,107,.3);color:var(--red)}.btn-r:hover{background:rgba(255,79,107,.08);border-color:var(--red)}
+.btn-p{border-color:rgba(168,85,247,.3);color:var(--acc)}.btn-p:hover{background:rgba(168,85,247,.08);border-color:var(--acc)}
+.btn-g{border-color:rgba(255,215,0,.3);color:var(--gold)}.btn-g:hover{background:rgba(255,215,0,.08);border-color:var(--gold)}
+.btn-gr{border-color:rgba(0,255,136,.3);color:var(--g)}.btn-gr:hover{background:rgba(0,255,136,.08);border-color:var(--g)}
+.btn-pk{border-color:rgba(255,79,154,.3);color:var(--pink)}.btn-pk:hover{background:rgba(255,79,154,.08);border-color:var(--pink)}
+.btn-sm{font-size:9px;padding:4px 9px;letter-spacing:.5px}
+
+/* INPUT */
+.inp{background:rgba(0,212,255,.03);border:1px solid rgba(0,212,255,.18);border-radius:2px;
+  color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:14px;padding:8px 11px;width:100%;outline:none;transition:all .2s}
+.inp:focus{border-color:rgba(0,212,255,.45);box-shadow:0 0 10px rgba(0,212,255,.07)}
+.inp::placeholder{color:rgba(200,230,240,.25)}
+textarea.inp{resize:none}
+.inp-p{border-color:rgba(168,85,247,.2)}.inp-p:focus{border-color:rgba(168,85,247,.5)}
+.inp-pk{border-color:rgba(255,79,154,.2)}.inp-pk:focus{border-color:rgba(255,79,154,.5)}
+
+/* LABELS */
+.lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(0,212,255,.5);margin-bottom:7px}
+.lbl-r{color:rgba(255,79,107,.55)}.lbl-p{color:rgba(168,85,247,.55)}.lbl-g{color:rgba(255,215,0,.55)}.lbl-pk{color:rgba(255,79,154,.55)}
+
+/* CHAT */
+.mj{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.13);border-left:2px solid var(--neon);
+  padding:9px 13px;border-radius:0 4px 4px 0;animation:fadeUp .3s ease;font-size:clamp(12px,1.5vw,13px);line-height:1.65;white-space:pre-wrap;max-width:min(520px,88vw)}
+.mu{background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.13);border-right:2px solid var(--acc);
+  padding:9px 13px;border-radius:4px 0 0 4px;animation:fadeUp .3s ease;font-size:clamp(12px,1.5vw,13px);line-height:1.65;white-space:pre-wrap;max-width:min(500px,86vw);text-align:right}
+.mwj{display:flex;flex-direction:column;align-items:flex-start;align-self:flex-start}
+.mwu{display:flex;flex-direction:column;align-items:flex-end;align-self:flex-end}
+.mwho{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(200,230,240,.25);margin-bottom:3px;letter-spacing:1px}
+.ca{flex:1;overflow-y:auto;padding:14px 15px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.cf{padding:9px 13px;border-top:1px solid rgba(0,212,255,.07);background:rgba(0,0,0,.4);display:flex;gap:7px;flex-shrink:0}
+
+/* WAVEFORM */
+.wv{display:flex;align-items:center;gap:2px;height:20px}
+.wb{width:2px;background:var(--neon);border-radius:2px;height:3px}
+.wb.on{animation:wave .6s ease-in-out infinite}
+
+/* MISC */
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 7px var(--g)}
+.pt{height:2px;background:rgba(0,212,255,.08);border-radius:1px;overflow:hidden}
+.pf{height:100%;background:linear-gradient(90deg,var(--neon),var(--g));box-shadow:0 0 6px var(--neon);border-radius:1px;transition:width .8s ease}
+.ld{width:6px;height:6px;border-radius:50%;background:var(--neon);animation:blink 1s ease-in-out infinite;display:inline-block}
+.ac{padding:9px;cursor:pointer;border:1px solid rgba(0,212,255,.1);border-radius:2px;transition:all .2s;background:rgba(0,212,255,.015);user-select:none}
+.ac:hover{transform:translateY(-1px);background:rgba(0,212,255,.04)}
+.ac.sel{border-color:rgba(0,212,255,.45)!important;background:rgba(0,212,255,.07)!important}
+.pc{padding:10px;cursor:pointer;border:1px solid rgba(0,212,255,.1);border-radius:2px;transition:all .2s;background:rgba(0,212,255,.018)}
+.pc:hover,.pc.sel{border-color:rgba(0,212,255,.32);background:rgba(0,212,255,.04)}
+.sa{padding:8px 10px;border:1px solid rgba(255,79,107,.1);border-radius:2px;background:rgba(255,79,107,.02);transition:all .2s}
+.sa.ok{border-color:rgba(0,255,136,.28);background:rgba(0,255,136,.02)}
+.sa.alert{animation:threatAnim 1s ease-in-out infinite}
+.uz{border:1px dashed rgba(168,85,247,.3);border-radius:2px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(168,85,247,.02)}
+.uz:hover,.uz.drag{border-color:rgba(168,85,247,.6);background:rgba(168,85,247,.06)}
+.ti{padding:9px 13px;border:1px solid rgba(168,85,247,.12);border-radius:2px;background:rgba(168,85,247,.02);display:flex;gap:9px;align-items:flex-start;animation:fadeUp .3s ease}
+.sr{border-radius:50%;border-style:solid;animation:shpulse 2.5s ease-in-out infinite}
+.th{padding:7px 11px;border-left:2px solid;border-radius:0 2px 2px 0;background:rgba(0,0,0,.3);animation:fadeUp .3s ease}
+.nl{stroke-dasharray:400;animation:neuron 3s ease-in-out infinite}
+.mn-anim{animation:mindpulse 2s ease-in-out infinite}
+.mn-tag{font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 5px;border:1px solid;border-radius:1px;text-align:center;flex-shrink:0;width:48px}
+.gc{padding:15px;border-left-width:3px;border-left-style:solid}
+.ei{position:absolute;background:rgba(0,8,18,.85);border:1px solid rgba(0,212,255,.22);border-radius:2px;padding:8px 12px;backdrop-filter:blur(10px);font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.2vw,10px);color:var(--neon);pointer-events:none}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,212,255,.22);border-radius:2px}
+footer{display:flex;align-items:center;justify-content:space-between;padding:5px 15px;border-top:1px solid rgba(0,212,255,.07);background:rgba(0,0,0,.7);flex-shrink:0;z-index:10;flex-wrap:wrap;gap:4px}
+
+/* ── VOICE OVERLAY ── */
+#vo{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;background:rgba(2,8,16,.9);backdrop-filter:blur(14px)}
+#vo.on{display:flex}
+#vb{width:min(580px,92vw);background:rgba(0,8,18,.97);border:1px solid rgba(0,212,255,.3);border-radius:5px;padding:clamp(16px,4vw,24px);animation:voiceIn .35s ease;box-shadow:0 0 60px rgba(0,212,255,.12)}
+
+/* ── MPIN ── */
+#mpin-m{position:fixed;inset:0;z-index:6000;display:none;align-items:center;justify-content:center;background:rgba(2,8,16,.93);backdrop-filter:blur(16px)}
+#mpin-m.on{display:flex}
+.mpb{width:min(310px,90vw);background:rgba(0,8,18,.98);border:1px solid rgba(0,212,255,.3);border-radius:5px;padding:clamp(18px,4vw,26px);text-align:center;box-shadow:0 0 60px rgba(0,212,255,.18)}
+.mpd{width:clamp(34px,10vw,42px);height:clamp(46px,12vw,54px);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.25);border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:clamp(17px,5vw,21px);color:var(--neon);transition:all .2s}
+.mpd.f{border-color:rgba(0,212,255,.6);box-shadow:0 0 10px rgba(0,212,255,.25)}
+.mpk{width:clamp(52px,14vw,62px);height:clamp(40px,10vw,46px);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:clamp(12px,3vw,14px);color:var(--neon);cursor:pointer;transition:all .2s;font-weight:700}
+.mpk:hover{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.5)}.mpk:active{transform:scale(.94)}
+
+/* ── NOTEPAD (Google Keep Style) ── */
+#note-fab{position:fixed;bottom:24px;right:24px;z-index:4000;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(255,79,154,.3),rgba(168,85,247,.3));border:1px solid rgba(255,79,154,.5);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;box-shadow:0 0 20px rgba(255,79,154,.3);animation:pinBounce 3s ease-in-out infinite}
+#note-fab:hover{background:linear-gradient(135deg,rgba(255,79,154,.5),rgba(168,85,247,.5));box-shadow:0 0 30px rgba(255,79,154,.5);transform:scale(1.1)}
+#note-fab .fab-icon{font-size:22px;filter:drop-shadow(0 0 6px rgba(255,79,154,.8))}
+#notepad{position:fixed;bottom:84px;right:24px;z-index:3999;width:min(360px,92vw);max-height:min(520px,80vh);
+  background:rgba(2,6,16,.97);border:1px solid rgba(255,79,154,.35);border-radius:5px;
+  display:none;flex-direction:column;overflow:hidden;
+  box-shadow:0 0 40px rgba(255,79,154,.15),0 20px 60px rgba(0,0,0,.6);animation:noteIn .3s ease}
+#notepad.open{display:flex}
+.np-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,79,154,.2);background:rgba(255,79,154,.05)}
+.np-tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid rgba(255,79,154,.12);overflow-x:auto;scrollbar-width:none}
+.np-tabs::-webkit-scrollbar{display:none}
+.np-tab{padding:4px 10px;border:1px solid rgba(255,79,154,.2);border-radius:10px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,79,154,.6);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.np-tab.active{background:rgba(255,79,154,.15);border-color:rgba(255,79,154,.5);color:var(--pink)}
+.np-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.np-note{padding:10px 14px;border-bottom:1px solid rgba(255,79,154,.08);cursor:pointer;transition:all .2s;animation:fadeUp .3s ease}
+.np-note:hover{background:rgba(255,79,154,.05)}
+.np-note.pinned::before{content:'📌';font-size:10px;margin-right:6px}
+.np-footer{padding:8px 10px;border-top:1px solid rgba(255,79,154,.12);display:flex;gap:6px}
+.np-input-area{padding:10px 14px;display:none;flex-direction:column;gap:8px;border-bottom:1px solid rgba(255,79,154,.12)}
+.np-input-area.show{display:flex}
+.color-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;transition:all .2s;border:2px solid transparent}
+.color-dot.active{border-color:white;transform:scale(1.2)}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="grid-bg"></div><div class="scanline"></div>
+<div class="corner c-tl"></div><div class="corner c-tr"></div>
+<div class="corner c-bl"></div><div class="corner c-br"></div>
+
+<!-- FLOATING NOTEPAD FAB -->
+<div id="note-fab" onclick="toggleNotepad()" title="Quick Notes (Google Keep Style)">
+  <span class="fab-icon">📌</span>
+</div>
+
+<!-- NOTEPAD PANEL -->
+<div id="notepad">
+  <div class="np-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:16px">📌</span>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--pink);letter-spacing:2px">MIND NOTES</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn btn-sm btn-pk" onclick="addNote()" style="font-size:8px;padding:3px 8px">+ NEW</button>
+      <button onclick="toggleNotepad()" style="background:none;border:none;color:rgba(255,79,154,.6);font-size:16px;cursor:pointer;line-height:1">×</button>
+    </div>
+  </div>
+  <div class="np-tabs" id="np-tabs"></div>
+  <div id="np-input" class="np-input-area">
+    <input id="np-title" class="inp inp-pk" placeholder="Note title..." style="font-size:13px;padding:7px 10px">
+    <textarea id="np-content" class="inp inp-pk" rows="4" placeholder="Write your idea, thought, or command..." style="font-size:13px;padding:7px 10px"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,79,154,.4)">COLOR:</span>
+        <div class="color-dot active" style="background:rgba(255,79,154,.5)" onclick="setNoteColor('#ff4f9a',this)"></div>
+        <div class="color-dot" style="background:rgba(0,212,255,.5)" onclick="setNoteColor('#00d4ff',this)"></div>
+        <div class="color-dot" style="background:rgba(255,215,0,.5)" onclick="setNoteColor('#ffd700',this)"></div>
+        <div class="color-dot" style="background:rgba(0,255,136,.5)" onclick="setNoteColor('#00ff88',this)"></div>
+        <div class="color-dot" style="background:rgba(168,85,247,.5)" onclick="setNoteColor('#a855f7',this)"></div>
+        <div class="color-dot" style="background:rgba(255,149,0,.5)" onclick="setNoteColor('#ff9500',this)"></div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sm btn-pk" onclick="saveNote()" style="font-size:9px">SAVE</button>
+        <button class="btn btn-sm" onclick="cancelNote()" style="font-size:9px;opacity:.5">CANCEL</button>
+      </div>
+    </div>
+  </div>
+  <div class="np-body" id="np-body">
+    <div style="display:flex;align-items:center;justify-content:center;height:120px;flex-direction:column;gap:6px;color:rgba(255,79,154,.25)">
+      <div style="font-size:24px">📌</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px">NO NOTES YET</div>
+      <div style="font-size:11px;color:rgba(200,230,240,.3)">Click + NEW to add your first note</div>
+    </div>
+  </div>
+  <div class="np-footer">
+    <input id="np-search" class="inp inp-pk" placeholder="Search notes..." style="flex:1;font-size:11px;padding:5px 9px" oninput="searchNotes()">
+    <button class="btn btn-sm" onclick="clearAllNotes()" style="font-size:8px;opacity:.4;color:var(--red);border-color:rgba(255,79,107,.2)">CLEAR</button>
+  </div>
+</div>
+
+<!-- VOICE OVERLAY -->
+<div id="vo">
+  <div id="vb">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="position:relative;width:42px;height:42px;flex-shrink:0">
+        <div class="sr" style="position:absolute;inset:0;border-color:rgba(0,212,255,.5);border-width:1px;animation-duration:1.2s"></div>
+        <div class="sr" style="position:absolute;inset:8px;border-color:rgba(0,212,255,.3);border-width:1px;animation-duration:1.6s;animation-delay:.3s"></div>
+        <div style="position:absolute;inset:14px;background:rgba(0,212,255,.45);border-radius:50%;box-shadow:0 0 14px rgba(0,212,255,.7)"></div>
+      </div>
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--neon);letter-spacing:2px">VOICE COMMAND</div>
+        <div id="vs" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,212,255,.5);letter-spacing:1px;margin-top:2px">INITIALIZING...</div>
+      </div>
+      <button onclick="closeVoice()" style="margin-left:auto;background:none;border:1px solid rgba(255,79,107,.3);color:var(--red);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:10px;padding:5px 9px;cursor:pointer;border-radius:2px;letter-spacing:1px">✕ CLOSE</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:2px;height:36px;justify-content:center;margin-bottom:12px" id="vwave"></div>
+    <div class="lbl">Live Transcript</div>
+    <div id="vlive" style="background:rgba(0,212,255,.03);border:1px solid rgba(0,212,255,.14);padding:9px 13px;min-height:40px;font-size:13px;line-height:1.6;color:rgba(200,230,240,.75);border-radius:2px;margin-bottom:10px;font-style:italic">Waiting for speech...</div>
+    <div class="lbl">Edit Command</div>
+    <textarea id="vedit" class="inp" rows="3" style="font-size:13px" placeholder="Your command will appear here — edit if needed..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-gr" style="flex:1;font-size:12px" onclick="confirmVoice()">▶ EXECUTE</button>
+      <button class="btn btn-sm btn-pk" onclick="saveVoiceAsNote()" style="font-size:10px">📌 SAVE TO NOTES</button>
+      <button class="btn btn-sm" onclick="clearVoice()">CLEAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MPIN MODAL -->
+<div id="mpin-m">
+  <div class="mpb">
+    <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--neon);letter-spacing:3px;margin-bottom:3px">SECURE ACCESS</div>
+    <div id="mpname" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,212,255,.45);margin-bottom:16px">ENTER PROJECT MPIN</div>
+    <div style="display:flex;gap:7px;justify-content:center;margin-bottom:16px">
+      <div class="mpd" id="mp0">_</div><div class="mpd" id="mp1">_</div><div class="mpd" id="mp2">_</div><div class="mpd" id="mp3">_</div>
+    </div>
+    <div id="mpnum" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;justify-items:center;margin-bottom:10px"></div>
+    <div id="mperr" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red);min-height:14px"></div>
+    <button class="btn btn-sm btn-r" onclick="closeMpin()" style="margin-top:8px;width:100%">CANCEL</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div style="display:flex;align-items:center;gap:10px;min-width:0">
+    <div class="orb"><div class="orb-c"></div></div>
+    <div style="min-width:0">
+      <div style="display:flex;align-items:baseline"><span class="brand">JARVIS OS</span><span class="brand-ml">+MIND LAB</span></div>
+      <div class="brand-s">DIPEN'S AI ECOSYSTEM v7.0 · FREE STACK · ZERO INVESTMENT</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:clamp(8px,2vw,16px);align-items:center" class="hm">
+    <div class="hs"><div class="hs-l">SHIELD</div><div class="hs-v" id="h-sh" style="color:var(--g)">ACTIVE</div></div>
+    <div class="hs"><div class="hs-l">AGENTS</div><div class="hs-v" style="color:var(--neon)">33 LIVE</div></div>
+    <div class="hs"><div class="hs-l">MEMORY</div><div class="hs-v" id="h-mem" style="color:var(--acc)">0 nodes</div></div>
+    <div class="hs"><div class="hs-l">MODEL</div><div class="hs-v" id="h-ai" style="color:var(--gold)">GEMINI</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:7px">
+    <button class="btn btn-sm btn-pk" onclick="toggleNotepad()" style="font-size:8px;padding:4px 8px">📌</button>
+    <button class="btn btn-sm" onclick="openVoice()" style="font-size:9px;padding:5px 9px">🎤</button>
+    <div><div class="clk" id="clk">00:00:00</div><div class="clk-d" id="clk-d">---</div></div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="chat">⬡ JARVIS</div>
+  <div class="tab" data-tab="projects">◈ Projects</div>
+  <div class="tab" data-tab="agents">◉ AI Team</div>
+  <div class="tab t-ml" data-tab="mindlab">◎ Mind Lab</div>
+  <div class="tab t-sec" data-tab="security">⚠ Security</div>
+  <div class="tab t-earth" data-tab="earth">🌍 Earth</div>
+  <div class="tab t-gm" data-tab="godmode">⚡ God Mode</div>
+  <div class="tab" data-tab="memory">◇ Memory</div>
+  <div class="tab t-note" data-tab="notes">📌 Notes</div>
+  <div class="tab" data-tab="settings">⚙ Settings</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<!-- CHAT PANEL -->
+<div class="panel active" id="pan-chat">
+  <div class="sb" style="width:183px;align-items:center">
+    <canvas id="hc" width="162" height="162"></canvas>
+    <div style="display:flex;gap:5px;align-items:center;margin-top:-4px">
+      <span class="dot" id="cdot"></span>
+      <span id="cstat" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,212,255,.6);letter-spacing:1px">STANDBY</span>
+    </div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:5px">
+      <div class="gl" style="padding:6px 9px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:rgba(200,230,240,.4)">Messages</span>
+        <span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--neon)" id="s-msg">1</span>
+      </div>
+      <div class="gl" style="padding:6px 9px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:rgba(200,230,240,.4)">Memories</span>
+        <span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--acc)" id="s-mem">0</span>
+      </div>
+      <div class="gl" style="padding:6px 9px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:rgba(200,230,240,.4)">Notes</span>
+        <span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--pink)" id="s-notes">0</span>
+      </div>
+      <div class="gl" style="padding:6px 9px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:rgba(200,230,240,.4)">Training</span>
+        <span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--acc)" id="s-trn">0</span>
+      </div>
+    </div>
+    <div style="width:100%">
+      <div class="lbl">Voice</div>
+      <button class="btn btn-sm" id="mic-btn" style="width:100%;margin-bottom:5px" onclick="toggleMic()">🎤 MIC OFF</button>
+      <div class="wv" id="wv" style="justify-content:center;padding:2px 0"></div>
+    </div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:4px">
+      <div class="lbl">AI Model</div>
+      <select id="ai-sel" class="inp" style="padding:5px 8px;font-size:10px;font-family:'Share Tech Mono',monospace" onchange="changeAIModel()">
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash ⚡ FREE</option>
+        <option value="gemini-1.5-pro">Gemini 1.5 Pro 🧠 FREE</option>
+        <option value="gemini-2.0-flash">Gemini 2.0 Flash 🚀 NEW</option>
+        <option value="openrouter">OpenRouter (Llama Free)</option>
+      </select>
+    </div>
+    <button class="btn btn-sm" onclick="clearChat()" style="width:100%;font-size:9px;opacity:.5">⊗ CLEAR</button>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="ca" id="ca">
+      <div class="mwj">
+        <div class="mwho">◈ JARVIS OS v7.0 — DIPEN'S AI ECOSYSTEM</div>
+        <div class="mj">Namaste, Dipen Sir. JARVIS OS v7.0 is fully operational.
+
+◆ Active Systems:
+→ Gemini 2.5 Flash — Add key in Settings (FREE)
+→ Mind Lab neural training
+→ Neural Shield security (10 agents)
+→ 3D Earth intelligence globe
+→ Voice command + notebook
+→ 📌 Google Keep-style Mind Notes
+→ Project MPIN security
+→ 33 AI agents total
+
+Add your Gemini API key in Settings tab to activate AI responses. Ready for your command, Sir.</div>
+      </div>
+    </div>
+    <div class="cf">
+      <input class="inp" id="ci" placeholder="Command JARVIS, Sir..." style="flex:1;font-size:14px">
+      <button class="btn" id="sbtn" onclick="sendMsg()">SEND</button>
+      <button class="btn btn-sm" onclick="openVoice()" style="font-size:11px;padding:7px 9px">🎤</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS PANEL -->
+<div class="panel" id="pan-projects">
+  <div class="sb" style="width:220px">
+    <div class="lbl">Projects (MPIN Protected)</div>
+    <div id="proj-list"></div>
+    <button class="btn btn-sm" style="width:100%;margin-top:2px" onclick="newProj()">+ NEW PROJECT</button>
+    <hr style="border:none;border-top:1px solid rgba(0,212,255,.07);margin:4px 0">
+    <div class="lbl">Platform Links</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;border:1px solid rgba(0,212,255,.18);border-radius:1px;color:rgba(0,212,255,.45)">Gmail</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;border:1px solid rgba(255,79,107,.18);border-radius:1px;color:rgba(255,79,107,.45)">Calendar</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;border:1px solid rgba(0,119,181,.22);border-radius:1px;color:rgba(100,180,255,.45)">LinkedIn</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;border:1px solid rgba(168,85,247,.18);border-radius:1px;color:rgba(168,85,247,.45)">Instagram</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;border:1px solid rgba(255,0,0,.18);border-radius:1px;color:rgba(255,80,80,.45)">YouTube</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;border:1px solid rgba(255,149,0,.18);border-radius:1px;color:rgba(255,149,0,.45)">Pinterest</span>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch" id="pdtl">
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:rgba(200,230,240,.18)">
+      <div style="font-family:'Orbitron',monospace;font-size:26px">◈</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px">SELECT A PROJECT</div>
+    </div>
+  </div>
+</div>
+
+<!-- AI TEAM PANEL -->
+<div class="panel" id="pan-agents">
+  <div class="sb" style="width:238px;gap:5px">
+    <div class="lbl">AI Agent Teams</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,215,0,.45);margin-bottom:4px">JARVIS TEAM (7)</div>
+    <div id="jteam"></div>
+    <hr style="border:none;border-top:1px solid rgba(0,212,255,.07);margin:2px 0">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(168,85,247,.45);margin-bottom:2px">MIND TEAM (4)</div>
+    <div id="mteam"></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="ag-right">
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:rgba(200,230,240,.18)">
+      <div style="font-family:'Orbitron',monospace;font-size:24px">◈◉◎</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px">SELECT AN AGENT</div>
+    </div>
+  </div>
+</div>
+
+<!-- MIND LAB PANEL -->
+<div class="panel" id="pan-mindlab" style="flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:900px;margin:0 auto;padding:18px;width:100%">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="display:flex;justify-content:center;margin-bottom:12px">
+        <svg width="88" height="88" viewBox="0 0 88 88" style="overflow:visible">
+          <defs>
+            <radialGradient id="mg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#a855f7" stop-opacity=".5"/>
+              <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="gf"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <circle cx="44" cy="44" r="41" fill="url(#mg)" opacity=".4"/>
+          <circle cx="44" cy="44" r="37" fill="none" stroke="#a855f7" stroke-width=".8" opacity=".3" style="animation:shpulse 3s ease-in-out infinite"/>
+          <circle cx="44" cy="44" r="27" fill="none" stroke="#a855f7" stroke-width=".8" opacity=".4" style="animation:shpulse 2.5s ease-in-out infinite;animation-delay:.5s"/>
+          <g filter="url(#gf)">
+            <circle cx="44" cy="14" r="3.5" fill="#a855f7" class="mn-anim" style="animation-delay:0s"/>
+            <circle cx="71" cy="29" r="3" fill="#00d4ff" class="mn-anim" style="animation-delay:.3s"/>
+            <circle cx="71" cy="59" r="3" fill="#00ff88" class="mn-anim" style="animation-delay:.6s"/>
+            <circle cx="44" cy="74" r="3.5" fill="#a855f7" class="mn-anim" style="animation-delay:.9s"/>
+            <circle cx="17" cy="59" r="3" fill="#ffd700" class="mn-anim" style="animation-delay:1.2s"/>
+            <circle cx="17" cy="29" r="3" fill="#ff9500" class="mn-anim" style="animation-delay:1.5s"/>
+            <circle cx="44" cy="44" r="5" fill="#a855f7" class="mn-anim" style="animation-delay:.2s"/>
+          </g>
+          <line x1="44" y1="14" x2="44" y2="44" stroke="#a855f7" stroke-width=".6" opacity=".4" class="nl" style="animation-delay:0s"/>
+          <line x1="71" y1="29" x2="44" y2="44" stroke="#00d4ff" stroke-width=".6" opacity=".4" class="nl" style="animation-delay:.5s"/>
+          <line x1="71" y1="59" x2="44" y2="44" stroke="#00ff88" stroke-width=".6" opacity=".4" class="nl" style="animation-delay:1s"/>
+          <line x1="44" y1="74" x2="44" y2="44" stroke="#a855f7" stroke-width=".6" opacity=".4" class="nl" style="animation-delay:1.5s"/>
+          <line x1="17" y1="59" x2="44" y2="44" stroke="#ffd700" stroke-width=".6" opacity=".4" class="nl" style="animation-delay:2s"/>
+          <line x1="17" y1="29" x2="44" y2="44" stroke="#ff9500" stroke-width=".6" opacity=".4" class="nl" style="animation-delay:2.5s"/>
+        </svg>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--acc);text-shadow:0 0 25px rgba(168,85,247,.6);letter-spacing:4px;margin-bottom:3px">◎ MIND LAB</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(168,85,247,.45);letter-spacing:3px">NEURAL TRAINING · AI KNOWLEDGE ENGINE · DIPEN'S DIGITAL BRAIN</div>
+      <div style="display:flex;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;padding:3px 9px;border:1px solid rgba(168,85,247,.28);border-radius:1px;color:rgba(168,85,247,.65)">NODES: <span id="mlc">0</span></div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;padding:3px 9px;border:1px solid rgba(0,255,136,.28);border-radius:1px;color:rgba(0,255,136,.65)">STATUS: READY</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;padding:3px 9px;border:1px solid rgba(255,215,0,.28);border-radius:1px;color:rgba(255,215,0,.65)">RESEARCH AGENTS: 15</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+      <div class="gl gl-pur" style="padding:15px">
+        <div class="lbl lbl-p">Train with Text / Prompt</div>
+        <textarea class="inp inp-p" id="ml-txt" rows="4" placeholder="Enter knowledge, instructions, or training data for JARVIS Mind..."></textarea>
+        <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
+          <select class="inp inp-p" id="ml-tag" style="flex:1;padding:6px 9px;font-size:11px;min-width:110px">
+            <option value="knowledge">Knowledge</option><option value="prompt">Prompt</option>
+            <option value="instruction">Instruction</option><option value="research">Research</option>
+            <option value="strategy">Strategy</option><option value="workflow">Workflow</option>
+          </select>
+          <button class="btn btn-p" onclick="addTrain()" style="font-size:11px">+ TRAIN</button>
+        </div>
+      </div>
+      <div class="gl gl-pur" style="padding:15px">
+        <div class="lbl lbl-p">URL / Web Learning</div>
+        <input class="inp inp-p" id="ml-url" placeholder="https://website.com" style="margin-bottom:8px">
+        <textarea class="inp inp-p" id="ml-ctx" rows="2" placeholder="What should MIND learn from this URL?"></textarea>
+        <button class="btn btn-p" onclick="learnURL()" style="width:100%;margin-top:8px;font-size:11px">◎ LEARN FROM URL</button>
+      </div>
+    </div>
+    <div class="gl gl-pur" style="padding:15px;margin-bottom:14px">
+      <div class="lbl lbl-p">Upload Training Files</div>
+      <div class="uz" id="uz" onclick="document.getElementById('mf').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <div style="font-size:22px;margin-bottom:6px">📁</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(168,85,247,.65)">CLICK OR DROP FILES</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.25);margin-top:3px">PDF · DOC · CSV · TXT · PNG · JPG · MP4 · JSON</div>
+      </div>
+      <input type="file" id="mf" multiple accept=".pdf,.doc,.docx,.csv,.txt,.png,.jpg,.jpeg,.mp4,.json" style="display:none" onchange="handleFiles(event)">
+      <div id="ulist" style="display:flex;flex-direction:column;gap:5px;margin-top:9px"></div>
+    </div>
+    <div class="gl gl-pur" style="padding:15px;margin-bottom:14px">
+      <div class="lbl lbl-p">Research Agents (15)</div>
+      <div id="ra" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px"></div>
+    </div>
+    <div class="gl gl-pur" style="padding:15px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div class="lbl lbl-p" style="margin:0">Knowledge Base</div>
+        <div style="display:flex;gap:6px">
+          <input class="inp inp-p" id="ml-s" placeholder="Search..." style="width:130px;padding:5px 9px;font-size:11px" oninput="renderTrain()">
+          <button class="btn btn-sm btn-p" onclick="clearTrain()" style="font-size:8px">CLEAR</button>
+        </div>
+      </div>
+      <div id="tlog" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECURITY PANEL -->
+<div class="panel" id="pan-security">
+  <div class="sb" style="width:210px">
+    <div class="lbl lbl-r">Neural Shield</div>
+    <div style="display:flex;align-items:center;justify-content:center;padding:12px 0">
+      <div style="position:relative;width:96px;height:96px">
+        <div class="sr" style="position:absolute;inset:0;border-color:rgba(0,255,136,.4);border-width:1px;animation-duration:3s"></div>
+        <div class="sr" style="position:absolute;inset:10px;border-color:rgba(0,255,136,.28);border-width:1px;animation-duration:2.5s;animation-delay:.4s"></div>
+        <div class="sr" style="position:absolute;inset:22px;border-color:rgba(0,255,136,.18);border-width:1px;animation-duration:2s;animation-delay:.8s"></div>
+        <div style="position:absolute;inset:33px;background:rgba(0,255,136,.14);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(0,255,136,.28)">
+          <span style="font-family:'Orbitron',monospace;font-size:9px;color:var(--g);font-weight:700">SHIELD</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:5px;align-items:center;justify-content:center;margin-top:-6px;margin-bottom:6px">
+      <span class="dot" id="shdot"></span>
+      <span id="shstat" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--g);letter-spacing:1px">ACTIVE</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+      <div class="gl gl-red" style="padding:6px 9px;display:flex;justify-content:space-between"><span style="font-size:10px;color:rgba(200,230,240,.4)">Threats</span><span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--g)" id="sec-t">0</span></div>
+      <div class="gl gl-red" style="padding:6px 9px;display:flex;justify-content:space-between"><span style="font-size:10px;color:rgba(200,230,240,.4)">Blocked</span><span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--g)" id="sec-b">0</span></div>
+      <div class="gl gl-red" style="padding:6px 9px;display:flex;justify-content:space-between"><span style="font-size:10px;color:rgba(200,230,240,.4)">Agents</span><span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--neon)">10</span></div>
+    </div>
+    <button class="btn btn-sm btn-r" style="width:100%" onclick="runScan()">⚡ FULL SCAN</button>
+    <button class="btn btn-sm" style="width:100%;border-color:rgba(255,215,0,.3);color:var(--gold);font-size:9px" onclick="lockdown()">🔒 LOCKDOWN</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:15px;-webkit-overflow-scrolling:touch">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px">
+      <div class="gl gl-red" style="padding:14px"><div class="lbl lbl-r">Security AI Agents</div><div id="sag" style="display:flex;flex-direction:column;gap:5px"></div></div>
+      <div class="gl gl-red" style="padding:14px">
+        <div class="lbl lbl-r">Threat Log</div>
+        <div id="tlog-s" style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto">
+          <div class="th" style="border-left-color:rgba(0,255,136,.5)">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--g)">SYSTEM CLEAR — NEURAL SHIELD ACTIVE</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.22);margin-top:2px" id="it"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="gl gl-red" style="padding:14px">
+      <div class="lbl lbl-r">Security Metrics</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">
+        <div class="gl" style="padding:9px;text-align:center"><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--g);margin-bottom:2px">100%</div><div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3);letter-spacing:1px">UPTIME</div></div>
+        <div class="gl" style="padding:9px;text-align:center"><div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--neon);margin-bottom:2px">AES-256</div><div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3);letter-spacing:1px">ENCRYPT</div></div>
+        <div class="gl" style="padding:9px;text-align:center"><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--gold);margin-bottom:2px" id="lat">12ms</div><div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3);letter-spacing:1px">LATENCY</div></div>
+        <div class="gl" style="padding:9px;text-align:center"><div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--acc);margin-bottom:2px">JWT</div><div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3);letter-spacing:1px">AUTH</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EARTH PANEL -->
+<div class="panel" id="pan-earth" style="position:relative;overflow:hidden">
+  <canvas id="ec"></canvas>
+  <div class="ei" style="top:12px;left:12px"><div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--g);letter-spacing:2px;margin-bottom:5px">🌍 GLOBAL INTEL</div><div style="color:rgba(200,230,240,.55);line-height:1.75">AI Nodes: <span style="color:var(--neon)">247</span><br>Active Ops: <span style="color:var(--g)">12</span><br>Coverage: <span style="color:var(--gold)">Global</span></div></div>
+  <div class="ei" style="top:12px;right:12px;text-align:right"><div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--neon);letter-spacing:2px;margin-bottom:5px">NEURAL SHIELD</div><div style="color:rgba(200,230,240,.55);line-height:1.75">Status: <span style="color:var(--g)">ACTIVE</span><br>Sats: <span style="color:var(--neon)">48</span><br>Cover: <span style="color:var(--g)">100%</span></div></div>
+  <div class="ei" style="bottom:50px;left:12px"><div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(0,212,255,.45);letter-spacing:1px;margin-bottom:4px">CONTROLS</div><div style="color:rgba(200,230,240,.45);font-size:9px;line-height:1.65">Drag: Rotate<br>Scroll: Zoom<br>Touch: Swipe</div></div>
+</div>
+
+<!-- GOD MODE PANEL -->
+<div class="panel" id="pan-godmode" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:760px;margin:0 auto;padding:18px;width:100%">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(15px,4vw,21px);font-weight:900;color:var(--gold);text-shadow:0 0 26px rgba(255,215,0,.5);letter-spacing:4px;margin-bottom:3px">⚡ BUSINESS GOD MODE</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(200,230,240,.3);letter-spacing:3px">MUSK · BEZOS · JOBS · BUFFETT ANALYSIS</div>
+    </div>
+    <div class="gl" style="padding:15px;margin-bottom:14px">
+      <div class="lbl lbl-g">Your Business Challenge</div>
+      <textarea class="inp" id="bi" rows="4" placeholder="Describe your business problem..." style="border-color:rgba(255,215,0,.15)"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-g" style="flex:1;font-size:12px" id="gmbtn" onclick="runGM()">⚡ ENGAGE GOD MODE</button>
+        <button class="btn btn-sm" onclick="resetGM()">RESET</button>
+      </div>
+    </div>
+    <div id="gmload" style="display:none;text-align:center;padding:28px">
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:9px">
+        <span class="ld" style="background:var(--gold);box-shadow:0 0 8px var(--gold);animation-delay:0s"></span>
+        <span class="ld" style="background:var(--gold);box-shadow:0 0 8px var(--gold);animation-delay:.18s;margin:0 3px"></span>
+        <span class="ld" style="background:var(--gold);box-shadow:0 0 8px var(--gold);animation-delay:.36s"></span>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,215,0,.65)">Channeling Musk · Bezos · Jobs · Buffett...</div>
+    </div>
+    <div id="gmres"></div>
+  </div>
+</div>
+
+<!-- MEMORY PANEL -->
+<div class="panel" id="pan-memory" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:700px;margin:0 auto;padding:15px;width:100%;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <input class="inp" id="ms" placeholder="Search memory..." style="flex:1;min-width:130px" oninput="renderMem()">
+      <input class="inp" id="mn" placeholder="Add memory node..." style="flex:1;min-width:150px" onkeydown="if(event.key==='Enter')addMem()">
+      <button class="btn btn-sm" onclick="addMem()">+ ADD</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,212,255,.45);letter-spacing:2px" id="mc">MEMORY ENGINE — 0 NODES</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap" id="mtags"></div>
+    </div>
+    <div id="mlist" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+</div>
+
+<!-- NOTES PANEL (Full Page) -->
+<div class="panel" id="pan-notes" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:900px;margin:0 auto;padding:18px;width:100%">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:var(--pink);letter-spacing:3px;text-shadow:0 0 20px rgba(255,79,154,.5)">📌 MIND NOTES</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,79,154,.45);letter-spacing:2px;margin-top:2px">GOOGLE KEEP STYLE · INSTANT CAPTURE · ALWAYS AVAILABLE</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input class="inp inp-pk" id="fn-search" placeholder="Search notes..." style="width:180px;font-size:12px;padding:7px 10px" oninput="renderFullNotes()">
+        <button class="btn btn-pk" onclick="addNote()" style="font-size:12px">+ NEW NOTE</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="fn-tags"></div>
+    <div id="fn-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px"></div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="panel" id="pan-settings" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:700px;margin:0 auto;padding:18px;width:100%;display:flex;flex-direction:column;gap:14px">
+    <div style="font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--neon);letter-spacing:3px">⚙ SYSTEM SETTINGS</div>
+    <div class="gl" style="padding:16px">
+      <div class="lbl">API Configuration — FREE</div>
+      <div style="margin-bottom:12px">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(200,230,240,.35);margin-bottom:5px">GEMINI 2.5 FLASH API KEY (FREE at aistudio.google.com)</div>
+        <div style="display:flex;gap:8px">
+          <input class="inp" id="gk" type="password" placeholder="AIzaSy..." style="flex:1;font-family:'Share Tech Mono',monospace;font-size:12px">
+          <button class="btn btn-sm" onclick="saveGem()">SAVE</button>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,255,136,.4);margin-top:4px">→ 100% Free: 15 req/min · 1M tokens/day · $0/month forever</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(200,230,240,.35);margin-bottom:5px">SELECT GEMINI MODEL</div>
+        <select id="gem-model-sel" class="inp" style="font-family:'Share Tech Mono',monospace;font-size:12px" onchange="setGemModel()">
+          <option value="gemini-1.5-flash" selected>⚡ Gemini 1.5 Flash — FASTEST · 15 req/min FREE</option>
+          <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro — ADVANCED · Free tier</option>
+          <option value="gemini-2.0-flash">🚀 Gemini 2.0 Flash — NEWEST · Free tier</option>
+        </select>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,212,255,.4);margin-top:4px">→ Gemini 1.5 Flash recommended: fastest + most reliable for free use</div>
+      </div>
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(200,230,240,.35);margin-bottom:5px">OPENROUTER API KEY (Free Llama/Qwen/DeepSeek)</div>
+        <div style="display:flex;gap:8px">
+          <input class="inp" id="ok" type="password" placeholder="sk-or-..." style="flex:1;font-family:'Share Tech Mono',monospace;font-size:12px">
+          <button class="btn btn-sm" onclick="saveOR()">SAVE</button>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,255,136,.4);margin-top:4px">→ Free models: Llama 3, DeepSeek, Qwen (openrouter.ai)</div>
+      </div>
+    </div>
+    <div class="gl" style="padding:16px">
+      <div class="lbl">Deployment Guide — GitHub → Vercel → Hostinger</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="padding:10px;border:1px solid rgba(0,212,255,.12);border-radius:2px"><div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--neon);margin-bottom:5px">STEP 1 — GITHUB</div><div style="font-size:12px;color:rgba(200,230,240,.65);line-height:1.65">1. github.com → New repository → Upload this HTML file<br>2. Name: jarvis-os.html → Commit changes</div></div>
+        <div style="padding:10px;border:1px solid rgba(0,255,136,.12);border-radius:2px"><div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--g);margin-bottom:5px">STEP 2 — VERCEL (FREE)</div><div style="font-size:12px;color:rgba(200,230,240,.65);line-height:1.65">1. vercel.com → Import from GitHub<br>2. Auto-deploy on every push → Free HTTPS URL instantly</div></div>
+        <div style="padding:10px;border:1px solid rgba(255,215,0,.12);border-radius:2px"><div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--gold);margin-bottom:5px">STEP 3 — HOSTINGER DOMAIN</div><div style="font-size:12px;color:rgba(200,230,240,.65);line-height:1.65">1. Hostinger → DNS → Add CNAME: cname.vercel-dns.com<br>2. Vercel → Project → Domains → Add your domain</div></div>
+        <div style="padding:10px;border:1px solid rgba(168,85,247,.12);border-radius:2px"><div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--acc);margin-bottom:5px">STEP 4 — PWA INSTALL</div><div style="font-size:12px;color:rgba(200,230,240,.65);line-height:1.65">Mobile: Browser → Share → Add to Home Screen<br>Desktop: Chrome → Address bar → Install icon</div></div>
+      </div>
+    </div>
+    <div class="gl" style="padding:15px">
+      <div class="lbl">Free Stack Status</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px;color:rgba(200,230,240,.6)">Hosting</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--g)">Vercel Free ✓</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px;color:rgba(200,230,240,.6)">AI API</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--g)">Gemini 2.5 Flash Free ✓</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px;color:rgba(200,230,240,.6)">Database</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--gold)">Supabase Free (add later)</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px;color:rgba(200,230,240,.6)">Voice</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--g)">Browser API Free ✓</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:12px;color:rgba(200,230,240,.6);font-weight:700">Total Cost</span><span style="font-family:'Orbitron',monospace;font-size:13px;color:var(--g)">$0 / MONTH</span></div>
+      </div>
+    </div>
+    <div class="gl" style="padding:14px"><div class="lbl">API Status</div><div id="kstat" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,79,107,.5)">No API key. Add Gemini key above — FREE at aistudio.google.com</div></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:4px;align-items:center"><span class="dot" style="width:5px;height:5px;background:var(--g);box-shadow:0 0 5px var(--g)"></span><span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3)">CORE: <span style="color:var(--g)">ONLINE</span></span></div>
+    <div style="display:flex;gap:4px;align-items:center"><span class="dot" style="width:5px;height:5px"></span><span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3)">SHIELD: <span style="color:var(--g)">ACTIVE</span></span></div>
+    <div style="display:flex;gap:4px;align-items:center"><span class="dot" style="width:5px;height:5px;background:var(--pink);box-shadow:0 0 5px var(--pink)"></span><span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3)">NOTES: <span style="color:var(--pink)" id="ft-notes">0</span></span></div>
+    <div style="display:flex;gap:4px;align-items:center"><span class="dot" style="width:5px;height:5px;background:var(--gold);box-shadow:0 0 5px var(--gold)"></span><span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(200,230,240,.3)">AI: <span style="color:var(--gold)" id="ft-ai">GEMINI 2.5 FLASH</span></span></div>
+  </div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(0,212,255,.22);letter-spacing:1px">JARVIS OS + MIND LAB v7.0 · DIPEN'S ECOSYSTEM · ZERO INVESTMENT</div>
+</footer>
+</div><script>
+// JARVIS OS + MIND LAB v7.0 — Complete JavaScript Engine
+// Dipen's AI Ecosystem | FREE STACK | Zero Investment
+
+// ── CONFIG ────────────────────────────────────────────
+let GEM_KEY = localStorage.getItem('gk') || '';
+let OR_KEY  = localStorage.getItem('ok') || '';
+const GEM_MODELS = {
+  'gemini-2.0-flash': 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+  'gemini-1.5-flash': 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+  'gemini-1.5-pro':   'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
+};
+let GEM_MODEL_SEL = localStorage.getItem('gem_model') || 'gemini-1.5-flash';
+const OR_URL  = 'https://openrouter.ai/api/v1/chat/completions';
+
+// ── AGENT DATA ─────────────────────────────────────────
+const JARVIS_TEAM = [
+  {id:'str',n:'Strategy AI',ic:'◈',c:'#00d4ff',d:'Vision & planning',t:'jarvis',p:'You are Strategy AI for JARVIS OS. Think first-principles. Be bold and visionary.'},
+  {id:'rev',n:'Revenue AI',ic:'◉',c:'#00ff88',d:'Revenue & growth',t:'jarvis',p:'You are Revenue AI. Focus on monetization, sales funnels, and revenue optimization.'},
+  {id:'mkt',n:'Marketing AI',ic:'◎',c:'#ff6b35',d:'Brand & campaigns',t:'jarvis',p:'You are Marketing AI. Growth hacking, brand building, viral campaigns.'},
+  {id:'ops',n:'Operations AI',ic:'◆',c:'#a855f7',d:'Systems & execution',t:'jarvis',p:'You are Operations AI. Kaizen mindset. Eliminate waste, systemize everything.'},
+  {id:'hr',n:'HR AI',ic:'◇',c:'#ffd700',d:'Team & culture',t:'jarvis',p:'You are HR AI. Build elite teams, culture, and performance systems.'},
+  {id:'prj',n:'Project AI',ic:'⬡',c:'#ff9500',d:'Project management',t:'jarvis',p:'You are Project AI. Deliver projects on time, on budget, with precision.'},
+  {id:'ana',n:'Analytics AI',ic:'⬢',c:'#00bfff',d:'Data & insights',t:'jarvis',p:'You are Analytics AI. Turn raw data into actionable business intelligence.'},
+];
+const MIND_TEAM = [
+  {id:'kno',n:'Knowledge AI',ic:'◈',c:'#a855f7',d:'Knowledge synthesis',t:'mind',p:'You are Knowledge AI for MIND LAB. Synthesize complex information into clear insights.'},
+  {id:'res',n:'Research AI',ic:'◉',c:'#00bfff',d:'Deep research',t:'mind',p:'You are Research AI. Conduct deep research, find non-obvious patterns and insights.'},
+  {id:'lrn',n:'Learning AI',ic:'◎',c:'#00ff88',d:'AI learning engine',t:'mind',p:'You are Learning AI. Help the system learn and evolve from new information.'},
+  {id:'mem',n:'Memory Architect',ic:'◇',c:'#ff9500',d:'Memory systems',t:'mind',p:'You are Memory Architect. Design and optimize knowledge storage and retrieval.'},
+];
+const RA = [
+  {n:'Knowledge AI',c:'#a855f7',i:'◈'},{n:'Deep Research',c:'#00bfff',i:'◉'},
+  {n:'Automation AI',c:'#00ff88',i:'◎'},{n:'Data Intelligence',c:'#ffd700',i:'◇'},
+  {n:'AI Evolution',c:'#ff4f9a',i:'◆'},{n:'Vision AI',c:'#ff9500',i:'⬡'},
+  {n:'Strategy AI',c:'#00d4ff',i:'⬢'},{n:'System Optimizer',c:'#ff6b35',i:'◌'},
+  {n:'Memory Architect',c:'#a855f7',i:'◈'},{n:'Learning AI',c:'#00bfff',i:'◉'},
+  {n:'Prompt Engineer',c:'#00ff88',i:'◎'},{n:'Workflow AI',c:'#ffd700',i:'◇'},
+  {n:'Analytics AI',c:'#ff4f9a',i:'◆'},{n:'Trend Prediction',c:'#ff9500',i:'⬡'},
+  {n:'Multimodal AI',c:'#00d4ff',i:'⬢'},
+];
+const SEC_AGENTS = [
+  {n:'Firewall AI',ic:'🔥',c:'#ff4f6b',d:'Network perimeter defense',ok:true},
+  {n:'Threat Detection',ic:'👁',c:'#ff9500',d:'Anomaly & threat analysis',ok:true},
+  {n:'Malware Defense',ic:'🛡',c:'#ff6b35',d:'Malware & virus protection',ok:true},
+  {n:'Data Encryption',ic:'🔐',c:'#ffd700',d:'AES-256 data protection',ok:true},
+  {n:'Authentication AI',ic:'🔑',c:'#00d4ff',d:'Identity & access control',ok:true},
+  {n:'Intrusion Detection',ic:'⚠',c:'#ff4f9a',d:'Real-time breach detection',ok:true},
+  {n:'Behavior Monitor',ic:'📊',c:'#a855f7',d:'AI behavior analysis',ok:true},
+  {n:'Neural Shield AI',ic:'⚡',c:'#00ff88',d:'Neural protection layer',ok:true},
+  {n:'Network Security',ic:'🌐',c:'#00bfff',d:'Traffic analysis',ok:true},
+  {n:'Emergency Lockdown',ic:'🔒',c:'#ff4f6b',d:'Emergency system lock',ok:false},
+];
+const GMS = [
+  {n:'Elon Musk',k:'elon',s:'First principles · 10x',c:'#00d4ff'},
+  {n:'Jeff Bezos',k:'bezos',s:'Customer obsession · Day 1',c:'#ff9500'},
+  {n:'Steve Jobs',k:'jobs',s:'Ruthless simplicity',c:'#e0e0e0'},
+  {n:'Warren Buffett',k:'buffett',s:'Moats · Compounding',c:'#ffd700'},
+];
+const PROJECTS = [
+  {id:'diamond',name:'USA Diamond Project',status:'active',color:'#00d4ff',tasks:['Market validation','Competitor analysis','MVP scoping','Investor deck'],notes:'Premium B2B SaaS targeting Fortune 500. TAM: $4.2B.',goals:'$1M ARR in 12 months.',progress:35,mpin:'1234'},
+  {id:'dazzler',name:'Dazzler Diam & Jewels',status:'active',color:'#ffd700',tasks:['Brand identity','Product catalog','Social strategy','Email campaigns'],notes:'Luxury jewelry brand for global premium market.',goals:'$500K revenue in 6 months.',progress:20,mpin:'5678'},
+];
+const NOTE_TAGS = ['All','Ideas','Projects','Tasks','Research','Personal','Urgent'];
+
+// ── STATE ──────────────────────────────────────────────
+let chatH=[],mems=[],training=[],notes=[],selProj=null,selAg=null,agH=[],
+    isThink=false,agThink=false,micOn=false,mFil='',earthDone=false,
+    mpBuf='',mpTgt=null,vRec=null,noteColor='#ff4f9a',activeNoteTag='All',noteFil='';
+
+// ── CLOCK ──────────────────────────────────────────────
+function tick(){
+  const d=new Date();
+  document.getElementById('clk').textContent=d.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('clk-d').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const el=document.getElementById('it');if(el)el.textContent=d.toLocaleTimeString('en-US',{hour12:false});
+}
+setInterval(tick,1000);tick();
+
+// ── TABS ───────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('pan-'+t.dataset.tab).classList.add('active');
+    if(t.dataset.tab==='earth'&&!earthDone)initEarth();
+    if(t.dataset.tab==='security')renderSecAg();
+    if(t.dataset.tab==='mindlab'){renderRA();renderTrain();}
+    if(t.dataset.tab==='notes')renderFullNotes();
+    if(t.dataset.tab==='agents'){renderJTeam();renderMTeam();}
+  });
+});
+
+// ── AI API (Gemini 2.5 Flash FREE) ────────────────────
+async function callGemini(msgs,sys){
+  if(!GEM_KEY)throw new Error('No Gemini API key. Go to Settings → add FREE key from aistudio.google.com');
+  const contents=msgs.filter(m=>m.role!=='system').map(m=>({
+    role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]
+  }));
+  const body={contents,generationConfig:{temperature:0.8,maxOutputTokens:1024,topP:0.95}};
+  if(sys)body.system_instruction={parts:[{text:sys}]};
+  const modelUrl=GEM_MODELS[GEM_MODEL_SEL]||GEM_MODELS['gemini-1.5-flash'];const r=await fetch(modelUrl+'?key='+GEM_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json();throw new Error('Gemini: '+(e.error?.message||r.status));}
+  const d=await r.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'No response from Gemini.';
+}
+async function callOpenRouter(msgs,sys){
+  if(!OR_KEY)throw new Error('No OpenRouter key configured.');
+  const messages=sys?[{role:'system',content:sys},...msgs]:msgs;
+  const r=await fetch(OR_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+OR_KEY,'HTTP-Referer':'https://jarvis-os.app','X-Title':'JARVIS OS'},
+    body:JSON.stringify({model:'meta-llama/llama-3.1-8b-instruct:free',messages,max_tokens:1024})});
+  if(!r.ok)throw new Error('OpenRouter error: '+r.status);
+  const d=await r.json();return d.choices?.[0]?.message?.content||'No response.';
+}
+async function callAI(msgs,sys){
+  const m=document.getElementById('ai-sel')?.value||'gemini-1.5-flash';
+  if(m==='openrouter'){
+    if(OR_KEY)return await callOpenRouter(msgs,sys);
+    throw new Error('No OpenRouter key. Add in Settings.');
+  }
+  // All gemini models
+  GEM_MODEL_SEL=m;
+  try{return await callGemini(msgs,sys);}
+  catch(e){
+    if(OR_KEY){try{return await callOpenRouter(msgs,sys)}catch{}}
+    throw e;
+  }
+}
+function changeAIModel(){
+  const m=document.getElementById('ai-sel')?.value||'gemini-1.5-flash';
+  GEM_MODEL_SEL=m;localStorage.setItem('gem_model',m);
+  const labels={'gemini-1.5-flash':'GEMINI 1.5 FLASH','gemini-1.5-pro':'GEMINI 1.5 PRO','gemini-2.0-flash':'GEMINI 2.0 FLASH','openrouter':'LLAMA FREE'};
+  const el=document.getElementById('h-ai');if(el)el.textContent=labels[m]||'GEMINI';
+  const ft=document.getElementById('ft-ai');if(ft)ft.textContent=(labels[m]||'GEMINI')+' ✓';
+  showToast('Model: '+(labels[m]||m));
+}
+
+// ── HEART CORE CANVAS ─────────────────────────────────
+let hT=0,hP=[],hA;
+function initP(){hP=Array.from({length:36},(_,i)=>({a:(i/36)*Math.PI*2,r:43+Math.random()*20,sp:0.002+Math.random()*.003,sz:1+Math.random()*2,op:.3+Math.random()*.7}))}
+function drawH(){
+  const cv=document.getElementById('hc');if(!cv)return;
+  const ctx=cv.getContext('2d'),W=162,H=162,cx=81,cy=81;
+  hT+=0.016;const t=hT,bt=isThink?1+Math.sin(t*9)*.12:1+Math.sin(t*1.4)*.04;
+  ctx.clearRect(0,0,W,H);
+  [70,56,43].forEach((r,i)=>{ctx.beginPath();ctx.arc(cx,cy,r*bt,0,Math.PI*2);ctx.strokeStyle='rgba(0,212,255,'+(0.054-i*.014)+')';ctx.lineWidth=1;ctx.stroke()});
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.5);
+  for(let i=0;i<22;i++){const a=(i/22)*Math.PI*2;ctx.beginPath();ctx.arc(Math.cos(a)*62,Math.sin(a)*62,1.4,0,Math.PI*2);ctx.fillStyle='rgba(0,212,255,'+(i%3===0?.8:.2)+')';ctx.fill();}
+  ctx.restore();
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(-t*.3);
+  for(let i=0;i<14;i++){const a=(i/14)*Math.PI*2;const ln=i%4===0?7:3;ctx.beginPath();ctx.moveTo(Math.cos(a)*70,Math.sin(a)*70);ctx.lineTo(Math.cos(a)*(70+ln),Math.sin(a)*(70+ln));ctx.strokeStyle='rgba(0,212,255,'+(i%4===0?.6:.2)+')';ctx.lineWidth=1.5;ctx.stroke();}
+  ctx.restore();
+  const pts=hP.map(p=>({x:cx+Math.cos(p.a+t*p.sp)*p.r,y:cy+Math.sin(p.a+t*p.sp)*p.r,...p}));
+  pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<30){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(0,212,255,'+((1-d/30)*.17)+')';ctx.lineWidth=.5;ctx.stroke();}}));
+  pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);ctx.fillStyle='rgba(0,212,255,'+(p.op*bt)+')';ctx.fill();});
+  const ca=isThink?.6+Math.sin(t*13)*.3:.45+Math.sin(t*2)*.12;
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,34*bt);
+  g.addColorStop(0,'rgba(0,212,255,'+ca+')');g.addColorStop(.4,'rgba(0,180,220,'+(ca*.5)+')');g.addColorStop(1,'rgba(0,212,255,0)');
+  ctx.beginPath();ctx.arc(cx,cy,34*bt,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.42);ctx.beginPath();
+  for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2-Math.PI/6;const r=14*bt;i===0?ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r):ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+  ctx.closePath();ctx.strokeStyle='rgba(0,212,255,.9)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='rgba(0,212,255,.13)';ctx.fill();ctx.restore();
+  if(isThink){const pr=(t*70)%70;ctx.beginPath();ctx.arc(cx,cy,pr,0,Math.PI*2);ctx.strokeStyle='rgba(255,215,0,'+Math.max(0,1-pr/70)*.5+')';ctx.lineWidth=1;ctx.stroke();}
+  hA=requestAnimationFrame(drawH);
+}
+function setCore(s){
+  const dot=document.getElementById('cdot'),lbl=document.getElementById('cstat');
+  const m={thinking:['#ffd700','PROCESSING'],speaking:['#00ff88','RESPONDING'],listening:['#ff4f9a','LISTENING'],standby:['#00d4ff','STANDBY']};
+  const[c,l]=m[s]||m.standby;dot.style.background=c;dot.style.boxShadow='0 0 7px '+c;lbl.textContent=l;lbl.style.color=c+'99';
+}
+
+// Init waveform bars
+const wvEl=document.getElementById('wv');
+for(let i=0;i<12;i++){const b=document.createElement('div');b.className='wb';b.style.animationDelay=i*.06+'s';b.style.animationDuration=(.4+(i%4)*.1)+'s';wvEl.appendChild(b);}
+// Voice overlay wave
+const vwEl=document.getElementById('vwave');
+for(let i=0;i<22;i++){const b=document.createElement('div');b.className='wb on';b.style.animationDelay=i*.05+'s';b.style.animationDuration=(.38+(i%5)*.07)+'s';vwEl.appendChild(b);}
+initP();drawH();
+
+// ── CHAT ───────────────────────────────────────────────
+function addMsg(role,txt){
+  const a=document.getElementById('ca');
+  const w=document.createElement('div');w.className=role==='assistant'?'mwj':'mwu';
+  const who=document.createElement('div');who.className='mwho';who.textContent=role==='assistant'?'◈ JARVIS v7.0 — DIPEN\'S AI':'YOU';
+  const b=document.createElement('div');b.className=role==='assistant'?'mj':'mu';b.textContent=txt;
+  w.appendChild(who);w.appendChild(b);a.appendChild(w);a.scrollTop=a.scrollHeight;
+  document.getElementById('s-msg').textContent=a.querySelectorAll('.mj,.mu').length;
+}
+function showThink(){
+  const a=document.getElementById('ca');
+  const d=document.createElement('div');d.id='thi';d.className='mwj';
+  d.innerHTML='<div class="mwho">◈ JARVIS</div><div class="mj" style="display:flex;align-items:center;gap:8px"><span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:#ffd700;letter-spacing:1px">PROCESSING</span><span class="ld" style="background:#ffd700;box-shadow:0 0 6px #ffd700;animation-delay:0s"></span><span class="ld" style="background:#ffd700;box-shadow:0 0 6px #ffd700;animation-delay:.2s;margin:0 3px"></span><span class="ld" style="background:#ffd700;box-shadow:0 0 6px #ffd700;animation-delay:.4s"></span></div>';
+  a.appendChild(d);a.scrollTop=a.scrollHeight;
+}
+function hideThink(){document.getElementById('thi')?.remove();}
+async function sendMsg(){
+  const inp=document.getElementById('ci');const txt=inp.value.trim();if(!txt||isThink)return;
+  inp.value='';isThink=true;document.getElementById('sbtn').disabled=true;
+  addMsg('user',txt);chatH.push({role:'user',content:txt});
+  const tags=['project','task','goal','vision','idea','research','note'];
+  const tag=tags.find(t=>txt.toLowerCase().includes(t))||'conversation';
+  if(txt.length>20){mems.unshift({id:Date.now(),text:txt.slice(0,150),tag,ts:Date.now()});updateStats();renderMem();}
+  setCore('thinking');showThink();
+  const tCtx=training.slice(0,5).map(t=>'['+t.type+']: '+t.content.slice(0,100)).join('\n');
+  const noteCtx=notes.slice(0,3).map(n=>n.title+': '+n.content.slice(0,80)).join('\n');
+  const sys='You are JARVIS v7.0 — Dipen\'s elite AI operating system. MIND LAB is active.'+(tCtx?'\n\nTrained knowledge:\n'+tCtx:'')+(noteCtx?'\n\nRecent notes:\n'+noteCtx:'')+'\n\nBe brilliant, direct. Address Dipen as "Sir". Use → for actions, ◆ for insights. Free stack powered by Gemini 2.5 Flash.';
+  try{
+    const reply=await callAI(chatH.map(m=>({role:m.role,content:m.content})),sys);
+    hideThink();chatH.push({role:'assistant',content:reply});addMsg('assistant',reply);
+    setCore('speaking');setTimeout(()=>setCore('standby'),2000);
+  }catch(e){
+    hideThink();
+    addMsg('assistant','⚠ '+e.message+'\n\n→ Go to Settings tab → add FREE Gemini API key from aistudio.google.com\n→ Key starts with "AIza..." and is completely free (15 req/min)');
+    setCore('standby');
+  }
+  isThink=false;document.getElementById('sbtn').disabled=false;
+}
+document.getElementById('ci').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
+function clearChat(){chatH=[];document.getElementById('ca').innerHTML='';addMsg('assistant','Memory cleared. Ready for new session, Sir.');}
+
+// ── MIC ────────────────────────────────────────────────
+function toggleMic(){
+  micOn=!micOn;const btn=document.getElementById('mic-btn');
+  const bars=document.querySelectorAll('.wb');
+  if(micOn){btn.textContent='● REC';btn.classList.add('on');bars.forEach(b=>b.classList.add('on'));setCore('listening');}
+  else{btn.textContent='🎤 MIC OFF';btn.classList.remove('on');bars.forEach(b=>b.classList.remove('on'));setCore('standby');}
+}
+
+// ── VOICE ──────────────────────────────────────────────
+function openVoice(){
+  document.getElementById('vo').classList.add('on');
+  const vs=document.getElementById('vs');
+  if(!('SpeechRecognition' in window||'webkitSpeechRecognition' in window)){vs.textContent='NOT SUPPORTED';document.getElementById('vlive').textContent='Type command in box below.';return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  vRec=new SR();vRec.continuous=true;vRec.interimResults=true;vRec.lang='en-US';
+  vRec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');document.getElementById('vlive').textContent=t;document.getElementById('vedit').value=t;};
+  vRec.onerror=()=>{vs.textContent='ERROR';};
+  vRec.onstart=()=>{vs.textContent='LISTENING...';};
+  vRec.onend=()=>{vs.textContent='STOPPED';};
+  try{vRec.start();}catch{}
+}
+function closeVoice(){document.getElementById('vo').classList.remove('on');try{vRec?.stop();}catch{}}
+function clearVoice(){document.getElementById('vlive').textContent='Waiting...';document.getElementById('vedit').value='';}
+function confirmVoice(){const cmd=document.getElementById('vedit').value.trim();if(!cmd)return;closeVoice();document.getElementById('ci').value=cmd;sendMsg();}
+function saveVoiceAsNote(){
+  const cmd=document.getElementById('vedit').value.trim();if(!cmd)return;
+  const note={id:Date.now(),title:'Voice Note '+new Date().toLocaleTimeString(),content:cmd,color:noteColor,tag:'Ideas',pinned:false,ts:Date.now()};
+  notes.unshift(note);saveNotes();updateStats();renderNotepad();renderFullNotes();
+  closeVoice();showToast('📌 Saved to Mind Notes!');
+}
+
+// ── PROJECTS ───────────────────────────────────────────
+function renderProjs(){
+  const el=document.getElementById('proj-list');if(!el)return;el.innerHTML='';
+  PROJECTS.forEach(p=>{
+    const d=document.createElement('div');d.className='pc gl'+(selProj?.id===p.id?' sel':'');
+    d.style.borderColor=selProj?.id===p.id?p.color+'55':'';
+    d.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;gap:4px"><span style="font-weight:700;font-size:11px;color:'+p.color+';flex:1;min-width:0;line-height:1.2">'+p.name+'</span><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:'+(p.status==='active'?'#00ff88':'#ffd700')+';border:1px solid '+(p.status==='active'?'#00ff8838':'#ffd70038')+';padding:1px 4px;border-radius:1px;flex-shrink:0">'+p.status.toUpperCase()+'</span></div><div class="pt"><div class="pf" style="width:'+p.progress+'%;background:linear-gradient(90deg,'+p.color+','+p.color+'80);box-shadow:0 0 6px '+p.color+'"></div></div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.3);margin-top:3px">'+p.progress+'% · 🔒 MPIN SECURED</div>';
+    d.onclick=()=>p.mpin?openMpin(p):(selProj=p,renderProjs(),renderPD());
+    el.appendChild(d);
+  });
+}
+function renderPD(){
+  const el=document.getElementById('pdtl');if(!selProj||!el)return;const p=selProj;
+  el.innerHTML='<div style="animation:fadeUp .3s ease"><div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap"><div style="width:3px;height:28px;background:'+p.color+';box-shadow:0 0 10px '+p.color+';border-radius:1px;flex-shrink:0"></div><div><div style="font-family:\'Orbitron\',monospace;font-size:clamp(14px,3vw,17px);font-weight:700;color:'+p.color+'">'+p.name+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:rgba(200,230,240,.3);margin-top:1px">ID: PRJ-'+p.id.toUpperCase()+' · MPIN SECURED</div></div><button class="btn btn-sm" onclick="genReport()" style="margin-left:auto;color:'+p.color+';border-color:'+p.color+'40;font-size:9px">◆ AI REPORT</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px"><div class="gl" style="padding:13px"><div class="lbl">Tasks</div><div id="tlist" style="display:flex;flex-direction:column;gap:6px">'+p.tasks.map((task,i)=>'<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,212,255,.05)"><div style="width:12px;height:12px;border:1px solid '+p.color+'55;border-radius:1px;cursor:pointer;flex-shrink:0" onclick="delTask('+i+')"></div><span style="font-size:12px;color:rgba(200,230,240,.7)">'+task+'</span></div>').join('')+'</div><div style="display:flex;gap:6px;margin-top:9px"><input class="inp" id="nt" placeholder="New task..." style="flex:1;font-size:12px;padding:6px 9px"><button class="btn btn-sm" onclick="addTask()" style="font-size:9px">+</button></div></div><div style="display:flex;flex-direction:column;gap:10px"><div class="gl" style="padding:12px"><div class="lbl">Notes</div><p style="font-size:12px;color:rgba(200,230,240,.6);line-height:1.6">'+p.notes+'</p></div><div class="gl" style="padding:12px"><div class="lbl">Goal</div><p style="font-size:13px;color:'+p.color+';font-weight:600">'+p.goals+'</p></div><div class="gl" style="padding:12px"><div style="display:flex;justify-content:space-between;margin-bottom:7px"><div class="lbl" style="margin:0">Progress</div><span style="font-family:\'Orbitron\',monospace;font-size:13px;color:'+p.color+'">'+p.progress+'%</span></div><div class="pt" style="margin-bottom:7px"><div class="pf" style="width:'+p.progress+'%;background:linear-gradient(90deg,'+p.color+','+p.color+'80);box-shadow:0 0 6px '+p.color+'"></div></div><input type="range" min="0" max="100" value="'+p.progress+'" style="width:100%;accent-color:'+p.color+'" oninput="updProg(this.value)"></div></div></div><div id="prpt" style="margin-top:12px"></div></div>';
+}
+async function genReport(){
+  const p=selProj;if(!p)return;const el=document.getElementById('prpt');
+  el.innerHTML='<div class="gl" style="padding:11px;display:flex;align-items:center;gap:7px"><span class="ld" style="background:'+p.color+';box-shadow:0 0 5px '+p.color+'"></span><span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:'+p.color+'">Generating AI report...</span></div>';
+  try{
+    const r=await callAI([{role:'user',content:'Project: '+p.name+'\nTasks: '+p.tasks.join(', ')+'\nNotes: '+p.notes+'\nGoal: '+p.goals+'\nProgress: '+p.progress+'%\n\nGenerate concise report: Status, Wins, Blockers, Next Actions.'}]);
+    el.innerHTML='<div class="gl" style="padding:14px;border-left:3px solid '+p.color+';background:'+p.color+'04"><div style="font-family:\'Orbitron\',monospace;font-size:10px;color:'+p.color+';margin-bottom:8px">◆ AI PROJECT REPORT</div><div style="font-size:12px;line-height:1.7;color:rgba(200,230,240,.8);white-space:pre-wrap">'+r+'</div></div>';
+  }catch(e){el.innerHTML='<div class="gl gl-red" style="padding:10px;font-size:11px;color:var(--red)">'+e.message+'</div>';}
+}
+function newProj(){const n=prompt('Project name:');if(!n)return;PROJECTS.push({id:'p'+Date.now(),name:n,status:'planning',color:'#a855f7',tasks:[],notes:'',goals:'',progress:0,mpin:''});renderProjs();updateStats();}
+function addTask(){const inp=document.getElementById('nt');const t=inp?.value.trim();if(!t||!selProj)return;selProj.tasks.push(t);inp.value='';renderPD();}
+function delTask(i){if(!selProj)return;selProj.tasks.splice(i,1);renderPD();}
+function updProg(v){if(!selProj)return;selProj.progress=parseInt(v);renderProjs();}
+renderProjs();
+
+// ── MPIN ───────────────────────────────────────────────
+function openMpin(proj){
+  mpBuf='';mpTgt=proj;
+  document.getElementById('mpname').textContent=proj.name.toUpperCase();
+  updMpD();
+  const np=document.getElementById('mpnum');np.innerHTML='';
+  for(let i=1;i<=9;i++){const b=document.createElement('button');b.className='mpk';b.textContent=i;b.onclick=()=>mpPress(String(i));np.appendChild(b);}
+  const em=document.createElement('div');np.appendChild(em);
+  const z=document.createElement('button');z.className='mpk';z.textContent='0';z.onclick=()=>mpPress('0');np.appendChild(z);
+  const del=document.createElement('button');del.className='mpk';del.textContent='⌫';del.style.fontSize='12px';del.onclick=()=>{mpBuf=mpBuf.slice(0,-1);updMpD();};np.appendChild(del);
+  document.getElementById('mperr').textContent='';
+  document.getElementById('mpin-m').classList.add('on');
+}
+function mpPress(d){if(mpBuf.length>=4)return;mpBuf+=d;updMpD();if(mpBuf.length===4)setTimeout(chkMpin,180);}
+function updMpD(){for(let i=0;i<4;i++){const el=document.getElementById('mp'+i);if(i<mpBuf.length){el.textContent='●';el.classList.add('f');}else{el.textContent='_';el.classList.remove('f');}}}
+function chkMpin(){
+  if(mpBuf===mpTgt.mpin||!mpTgt.mpin){closeMpin();selProj=mpTgt;renderProjs();renderPD();}
+  else{document.getElementById('mperr').textContent='⚠ INCORRECT MPIN';mpBuf='';setTimeout(()=>{updMpD();document.getElementById('mperr').textContent='';},1200);}
+}
+function closeMpin(){document.getElementById('mpin-m').classList.remove('on');mpBuf='';mpTgt=null;}
+
+// ── AI AGENTS ──────────────────────────────────────────
+function renderJTeam(){
+  const el=document.getElementById('jteam');if(!el)return;el.innerHTML='';
+  JARVIS_TEAM.forEach(a=>{
+    const d=document.createElement('div');d.className='ac'+(selAg?.id===a.id?' sel':'');
+    if(selAg?.id===a.id)d.style.borderColor=a.c+'55';
+    d.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;color:'+a.c+'">'+a.ic+'</span><div><div style="font-weight:700;font-size:11px;color:'+a.c+';line-height:1">'+a.n+'</div><div style="font-size:9px;color:rgba(200,230,240,.32);margin-top:1px">'+a.d+'</div></div></div>';
+    d.onclick=()=>{selAg=a;agH=[];renderJTeam();renderMTeam();renderAgUI();};
+    el.appendChild(d);
+  });
+}
+function renderMTeam(){
+  const el=document.getElementById('mteam');if(!el)return;el.innerHTML='';
+  MIND_TEAM.forEach(a=>{
+    const d=document.createElement('div');d.className='ac'+(selAg?.id===a.id?' sel':'');
+    if(selAg?.id===a.id)d.style.borderColor=a.c+'55';
+    d.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;color:'+a.c+'">'+a.ic+'</span><div><div style="font-weight:700;font-size:11px;color:'+a.c+';line-height:1">'+a.n+'</div><div style="font-size:9px;color:rgba(200,230,240,.32);margin-top:1px">'+a.d+'</div></div></div>';
+    d.onclick=()=>{selAg=a;agH=[];renderJTeam();renderMTeam();renderAgUI();};
+    el.appendChild(d);
+  });
+}
+function renderAgUI(){
+  const el=document.getElementById('ag-right');if(!selAg){el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:rgba(200,230,240,.18)"><div style="font-family:Orbitron,monospace;font-size:22px">◈◉◎</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:2px">SELECT AN AGENT</div></div>';return;}
+  const a=selAg;
+  const teamLabel=a.t==='jarvis'?'JARVIS TEAM':'MIND TEAM';
+  el.innerHTML='<div style="padding:10px 15px;border-bottom:1px solid rgba(0,212,255,.07);background:rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap"><span style="font-size:18px;color:'+a.c+';filter:drop-shadow(0 0 5px '+a.c+')">'+a.ic+'</span><div><div style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:700;color:'+a.c+'">'+a.n.toUpperCase()+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.3)">'+teamLabel+' · '+a.d+'</div></div><div style="margin-left:auto;display:flex;align-items:center;gap:5px"><span style="width:5px;height:5px;border-radius:50%;background:'+a.c+';box-shadow:0 0 5px '+a.c+';display:inline-block"></span><span style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:'+a.c+'">ONLINE</span><button class="btn btn-sm" onclick="clrAg()" style="margin-left:7px;font-size:8px;opacity:.5">CLEAR</button></div></div><div id="agc" class="ca"><div style="text-align:center;padding:28px;color:rgba(200,230,240,.2)"><div style="font-size:22px;color:'+a.c+'35;margin-bottom:6px">'+a.ic+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;letter-spacing:1px">'+a.n.toUpperCase()+' READY</div><div style="font-size:11px;margin-top:5px;opacity:.7">'+a.d+'</div></div></div><div class="cf"><input class="inp" id="agi" placeholder="Brief '+a.n+'..." style="flex:1"><button class="btn" id="agb" style="border-color:'+a.c+'50;color:'+a.c+'" onclick="sendAg()">SEND</button></div>';
+  document.getElementById('agi').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendAg();}});
+}
+function addAgMsg(role,txt){
+  const a=selAg;const el=document.getElementById('agc');if(!el)return;
+  const w=document.createElement('div');w.className=role==='assistant'?'mwj':'mwu';
+  const who=document.createElement('div');who.className='mwho';who.textContent=role==='assistant'?'◈ '+a.n.toUpperCase():'YOU';
+  const b=document.createElement('div');
+  b.style.cssText='background:'+(role==='assistant'?a.c+'07':'rgba(168,85,247,.05)')+';border:1px solid '+(role==='assistant'?a.c+'22':'rgba(168,85,247,.12)')+';border-'+(role==='assistant'?'left':'right')+':2px solid '+(role==='assistant'?a.c:'#a855f7')+';padding:9px 13px;border-radius:'+(role==='assistant'?'0 4px 4px 0':'4px 0 0 4px')+';font-size:13px;line-height:1.6;white-space:pre-wrap;animation:fadeUp .3s ease;max-width:min(480px,85vw);text-align:'+(role==='user'?'right':'left');
+  b.textContent=txt;w.appendChild(who);w.appendChild(b);el.appendChild(w);el.scrollTop=el.scrollHeight;
+}
+async function sendAg(){
+  const inp=document.getElementById('agi');if(!inp||!selAg||agThink)return;
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';agThink=true;document.getElementById('agb').disabled=true;
+  addAgMsg('user',txt);agH.push({role:'user',content:txt});
+  const a=selAg;const el=document.getElementById('agc');
+  const ld=document.createElement('div');ld.id='agld';ld.className='mwj';
+  ld.innerHTML='<div class="mwho">◈ '+a.n.toUpperCase()+'</div><div style="background:'+a.c+'07;border:1px solid '+a.c+'22;border-left:2px solid '+a.c+';padding:7px 13px;display:flex;align-items:center;gap:7px"><span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:'+a.c+'">ANALYZING</span><span class="ld" style="background:'+a.c+';box-shadow:0 0 5px '+a.c+';animation-delay:0s"></span><span class="ld" style="background:'+a.c+';box-shadow:0 0 5px '+a.c+';animation-delay:.2s;margin:0 3px"></span><span class="ld" style="background:'+a.c+';box-shadow:0 0 5px '+a.c+';animation-delay:.4s"></span></div>';
+  el.appendChild(ld);el.scrollTop=el.scrollHeight;
+  try{
+    const sys='You are '+a.n+' within JARVIS OS v7.0 for Dipen. '+a.p+' Use → for actions. Be tactical and specific.';
+    const r=await callAI(agH.map(m=>({role:m.role,content:m.content})),sys);
+    document.getElementById('agld')?.remove();agH.push({role:'assistant',content:r});addAgMsg('assistant',r);
+  }catch(e){document.getElementById('agld')?.remove();addAgMsg('assistant','⚠ '+e.message);}
+  agThink=false;const ab=document.getElementById('agb');if(ab)ab.disabled=false;
+}
+function clrAg(){agH=[];const el=document.getElementById('agc');if(el)el.innerHTML='';}
+renderJTeam();renderMTeam();
+
+// ── MIND LAB ───────────────────────────────────────────
+function renderRA(){
+  const el=document.getElementById('ra');if(!el)return;el.innerHTML='';
+  RA.forEach(a=>{
+    const d=document.createElement('div');
+    d.style.cssText='padding:8px 9px;border:1px solid '+a.c+'1e;border-radius:2px;background:'+a.c+'05;cursor:pointer;transition:all .2s';
+    d.innerHTML='<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span style="font-size:11px;color:'+a.c+'">'+a.i+'</span><span style="font-size:10px;font-weight:600;color:'+a.c+'">'+a.n+'</span></div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.25)">MIND LAB</div>';
+    d.onmouseover=()=>d.style.background=a.c+'10';d.onmouseout=()=>d.style.background=a.c+'05';
+    d.onclick=()=>{const q=prompt(a.n+': Research query?');if(!q)return;document.querySelector('[data-tab="chat"]').click();document.getElementById('ci').value='['+a.n+'] '+q;sendMsg();};
+    el.appendChild(d);
+  });
+}
+function addTrain(){const txt=document.getElementById('ml-txt').value.trim();const tag=document.getElementById('ml-tag').value;if(!txt)return;training.unshift({id:Date.now(),content:txt,type:tag,ts:Date.now(),src:'manual'});document.getElementById('ml-txt').value='';renderTrain();updateStats();}
+function learnURL(){const url=document.getElementById('ml-url').value.trim();const ctx=document.getElementById('ml-ctx').value.trim();if(!url)return;training.unshift({id:Date.now(),content:'URL: '+url+(ctx?'\nContext: '+ctx:''),type:'knowledge',ts:Date.now(),src:'url'});document.getElementById('ml-url').value='';document.getElementById('ml-ctx').value='';renderTrain();updateStats();}
+function handleFiles(e){Array.from(e.target.files).forEach(processFile);}
+function handleDrop(e){e.preventDefault();document.getElementById('uz').classList.remove('drag');Array.from(e.dataTransfer.files).forEach(processFile);}
+function processFile(f){
+  const ext=f.name.split('.').pop().toLowerCase();
+  const ic={'pdf':'📄','doc':'📝','docx':'📝','csv':'📊','txt':'📋','png':'🖼','jpg':'🖼','jpeg':'🖼','mp4':'🎥','json':'⚡'}[ext]||'📁';
+  const list=document.getElementById('ulist');const item=document.createElement('div');
+  item.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid rgba(168,85,247,.14);border-radius:2px;background:rgba(168,85,247,.02)';
+  item.innerHTML='<span style="font-size:13px">'+ic+'</span><div style="flex:1;min-width:0"><div style="font-size:11px;color:rgba(200,230,240,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(168,85,247,.55)">'+(f.size/1024).toFixed(1)+'KB · INDEXED</div></div><span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--g)">✓</span>';
+  list.appendChild(item);
+  training.unshift({id:Date.now(),content:'File: '+f.name+' ('+(f.size/1024).toFixed(1)+'KB)',type:'knowledge',ts:Date.now(),src:'file'});
+  renderTrain();updateStats();
+}
+function renderTrain(){
+  const log=document.getElementById('tlog');if(!log)return;
+  const s=(document.getElementById('ml-s')?.value||'').toLowerCase();
+  const fil=training.filter(t=>!s||t.content.toLowerCase().includes(s)||t.type.includes(s));
+  if(!fil.length){log.innerHTML='<div style="text-align:center;padding:18px;color:rgba(200,230,240,.18);font-family:\'Share Tech Mono\',monospace;font-size:9px;letter-spacing:1px">NO TRAINING DATA — Add text, URLs, or files above</div>';return;}
+  const tc={knowledge:'#a855f7',prompt:'#00d4ff',instruction:'#00ff88',research:'#ffd700',strategy:'#ff9500',workflow:'#ff4f9a'};
+  log.innerHTML=fil.map(t=>{
+    const c=tc[t.type]||'#a855f7';const d=new Date(t.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return '<div class="ti"><div style="flex-shrink:0"><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;padding:2px 4px;border:1px solid '+c+'38;border-radius:1px;color:'+c+'">'+t.type.slice(0,6).toUpperCase()+'</span></div><div style="flex:1;min-width:0;font-size:12px;color:rgba(200,230,240,.68);line-height:1.5">'+t.content.slice(0,110)+(t.content.length>110?'...':'')+'</div><div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px"><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.2)">'+d+'</div><button onclick="delTrain('+t.id+')" style="background:none;border:none;color:rgba(255,79,107,.32);cursor:pointer;font-size:10px;padding:0">✕</button></div></div>';
+  }).join('');
+}
+function delTrain(id){training=training.filter(t=>t.id!==id);renderTrain();updateStats();}
+function clearTrain(){training=[];renderTrain();updateStats();}
+
+// ── SECURITY ───────────────────────────────────────────
+function renderSecAg(){
+  const el=document.getElementById('sag');if(!el)return;el.innerHTML='';
+  SEC_AGENTS.forEach(a=>{
+    const d=document.createElement('div');d.className='sa'+(a.ok?' ok':'');
+    d.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px">'+a.ic+'</span><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;color:'+(a.ok?a.c:'rgba(200,230,240,.5)')+'">'+a.n+'</div><div style="font-size:9px;color:rgba(200,230,240,.3)">'+a.d+'</div></div><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;padding:1px 4px;border:1px solid;border-radius:1px;color:'+(a.ok?'#00ff88':'#ffd700')+';border-color:'+(a.ok?'#00ff8838':'#ffd70038')+'">'+( a.ok?'ACTIVE':'STANDBY')+'</span></div>';
+    el.appendChild(d);
+  });
+}
+function addThreat(msg,lvl){
+  const el=document.getElementById('tlog-s');if(!el)return;
+  const cols={threat:'#ff4f6b',warning:'#ffd700',info:'#00d4ff',clear:'#00ff88'};const c=cols[lvl]||'#00d4ff';
+  const d=document.createElement('div');d.className='th';d.style.borderLeftColor=c+'80';
+  const t=new Date().toLocaleTimeString('en-US',{hour12:false});
+  d.innerHTML='<div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:'+c+'">'+msg.toUpperCase()+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.22);margin-top:2px">'+t+'</div>';
+  el.insertBefore(d,el.firstChild);
+}
+async function runScan(){addThreat('Initiating neural security scan...','info');renderSecAg();await new Promise(r=>setTimeout(r,1200));document.getElementById('lat').textContent=Math.floor(8+Math.random()*14)+'ms';addThreat('Full scan complete — all systems clear','clear');}
+function lockdown(){
+  document.getElementById('h-sh').textContent='LOCKDOWN';document.getElementById('h-sh').style.color='#ff4f6b';
+  document.getElementById('shstat').textContent='LOCKDOWN';document.getElementById('shdot').style.background='#ff4f6b';
+  addThreat('⚠ EMERGENCY LOCKDOWN ACTIVATED','threat');
+  setTimeout(()=>{document.getElementById('h-sh').textContent='ACTIVE';document.getElementById('h-sh').style.color='#00ff88';document.getElementById('shstat').textContent='ACTIVE';document.getElementById('shdot').style.background='#00ff88';addThreat('Lockdown lifted — systems restored','clear');},4000);
+}
+
+// ── GOD MODE ───────────────────────────────────────────
+async function runGM(){
+  const prob=document.getElementById('bi').value.trim();if(!prob)return;
+  document.getElementById('gmbtn').disabled=true;document.getElementById('gmload').style.display='block';document.getElementById('gmres').innerHTML='';
+  const sys='You are JARVIS Business God Mode v7.0. Return ONLY valid JSON (no markdown): {"elon":"3-4 sentences Elon Musk first-principles analysis","bezos":"3-4 sentences Jeff Bezos customer obsession","jobs":"3-4 sentences Steve Jobs simplicity","buffett":"3-4 sentences Warren Buffett financial wisdom","action_plan":["Week 1: action","Week 2: action","Week 3: action","Week 4: action"]}';
+  try{
+    const raw=await callAI([{role:'user',content:'Business problem: '+prob}],sys);
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    document.getElementById('gmload').style.display='none';renderGM(data);
+  }catch(e){
+    document.getElementById('gmload').style.display='none';
+    document.getElementById('gmres').innerHTML='<div class="gl gl-red" style="padding:12px;font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--red)">'+e.message+'</div>';
+  }
+  document.getElementById('gmbtn').disabled=false;
+}
+function renderGM(data){
+  const el=document.getElementById('gmres');el.style.cssText='display:flex;flex-direction:column;gap:11px;animation:fadeUp .4s ease';
+  const cards=GMS.map(s=>'<div class="gl gc" style="border-left-color:'+s.c+';background:'+s.c+'04"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-family:\'Orbitron\',monospace;font-size:11px;color:'+s.c+';font-weight:700">'+s.n.toUpperCase()+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:rgba(200,230,240,.25)">— '+s.s+'</div></div><p style="font-size:12px;line-height:1.7;color:rgba(200,230,240,.8)">'+(data[s.k]||'—')+'</p></div>').join('');
+  const plan=data.action_plan?'<div class="gl" style="padding:15px;border-left:3px solid var(--g)"><div style="font-family:\'Orbitron\',monospace;font-size:11px;color:var(--g);font-weight:700;margin-bottom:11px">◆ 4-WEEK EXECUTION PLAN</div><div style="display:flex;flex-direction:column;gap:8px">'+data.action_plan.map((item,i)=>'<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-family:\'Orbitron\',monospace;font-size:9px;color:var(--g);width:16px;flex-shrink:0;padding-top:1px">W'+(i+1)+'</div><div style="font-size:12px;color:rgba(200,230,240,.8);line-height:1.55">'+item.replace(/^Week \d+:\s*/i,'')+'</div></div>').join('')+'</div></div>':'';
+  el.innerHTML=cards+plan;
+}
+function resetGM(){document.getElementById('bi').value='';document.getElementById('gmres').innerHTML='';document.getElementById('gmload').style.display='none';document.getElementById('gmbtn').disabled=false;}
+
+// ── MEMORY ─────────────────────────────────────────────
+function addMem(){const inp=document.getElementById('mn');const txt=inp.value.trim();if(!txt)return;mems.unshift({id:Date.now(),text:txt,tag:'note',ts:Date.now()});inp.value='';updateStats();renderMem();}
+function delMem(id){mems=mems.filter(m=>m.id!==id);updateStats();renderMem();}
+function renderMem(){
+  const s=document.getElementById('ms').value.toLowerCase();
+  const tags=['all','project','task','note','vision','conversation','research','goal'];
+  document.getElementById('mtags').innerHTML=tags.map(t=>'<button class="btn btn-sm" style="opacity:'+(mFil===t||(t==="all"&&!mFil)?1:.38)+';font-size:8px;padding:3px 7px" onclick="setMF(\''+t+'\')">'+t.slice(0,4).toUpperCase()+'</button>').join('');
+  const fil=mems.filter(m=>{const ms=!s||m.text.toLowerCase().includes(s)||m.tag.includes(s);const mf=!mFil||m.tag===mFil;return ms&&mf;});
+  document.getElementById('mc').textContent='MEMORY ENGINE — '+fil.length+' NODES';
+  const el=document.getElementById('mlist');
+  if(!fil.length){el.innerHTML='<div style="text-align:center;padding:28px;color:rgba(200,230,240,.18);font-family:\'Share Tech Mono\',monospace;font-size:9px;letter-spacing:1px">NO MEMORY NODES</div>';return;}
+  const tc={project:'#00d4ff',task:'#00ff88',vision:'#ffd700',note:'#a855f7',conversation:'#ff4f9a',research:'#00bfff',goal:'#ff9500'};
+  el.innerHTML=fil.map(m=>{const c=tc[m.tag]||'#a855f7';const d=new Date(m.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});return '<div class="gl" style="display:flex;gap:9px;padding:9px 13px;animation:fadeUp .3s ease"><div class="mn-tag" style="color:'+c+';border-color:'+c+'38">'+m.tag.slice(0,4).toUpperCase()+'</div><div style="flex:1;min-width:0;font-size:12px;color:rgba(200,230,240,.72);line-height:1.5">'+m.text+'</div><div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px"><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.2)">'+d+'</div><button onclick="delMem('+m.id+')" style="background:none;border:none;color:rgba(255,79,107,.3);cursor:pointer;font-size:10px;padding:0">✕</button></div></div>';}).join('');
+}
+function setMF(t){mFil=t==='all'?'':t;renderMem();}
+
+// ── GOOGLE KEEP STYLE NOTEPAD ──────────────────────────
+function loadNotes(){try{const s=localStorage.getItem('jarvis_notes');if(s)notes=JSON.parse(s);}catch{notes=[];}}
+function saveNotes(){try{localStorage.setItem('jarvis_notes',JSON.stringify(notes));}catch{}}
+loadNotes();
+
+function toggleNotepad(){
+  const el=document.getElementById('notepad');
+  el.classList.toggle('open');
+  if(el.classList.contains('open')){renderNotepad();renderNpTags();}
+}
+function renderNpTags(){
+  const el=document.getElementById('np-tabs');if(!el)return;
+  el.innerHTML=NOTE_TAGS.map(t=>'<div class="np-tab'+(activeNoteTag===t?' active':'')+'" onclick="setNpTag(\''+t+'\')">'+t+'</div>').join('');
+}
+function setNpTag(t){activeNoteTag=t;renderNotepad();renderNpTags();}
+function renderNotepad(){
+  const el=document.getElementById('np-body');if(!el)return;
+  const s=(document.getElementById('np-search')?.value||'').toLowerCase();
+  let fil=notes.filter(n=>{
+    const mTag=activeNoteTag==='All'||n.tag===activeNoteTag;
+    const mS=!s||n.title.toLowerCase().includes(s)||n.content.toLowerCase().includes(s);
+    return mTag&&mS;
+  });
+  const pinned=fil.filter(n=>n.pinned);const rest=fil.filter(n=>!n.pinned);fil=[...pinned,...rest];
+  if(!fil.length){el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100px;flex-direction:column;gap:6px;color:rgba(255,79,154,.25)"><div style="font-size:20px">📌</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:9px">NO NOTES</div></div>';return;}
+  el.innerHTML=fil.map(n=>'<div class="np-note'+(n.pinned?' pinned':'')+'" style="border-left:2px solid '+n.color+';background:'+n.color+'06" onclick="openNote('+n.id+')" oncontextmenu="pinNote(event,'+n.id+')"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="font-size:12px;font-weight:600;color:'+n.color+';line-height:1.3;flex:1">'+n.title+'</div><button onclick="event.stopPropagation();delNote('+n.id+')" style="background:none;border:none;color:rgba(255,79,107,.35);cursor:pointer;font-size:12px;padding:0;flex-shrink:0">✕</button></div><div style="font-size:11px;color:rgba(200,230,240,.6);margin-top:4px;line-height:1.4;max-height:48px;overflow:hidden">'+n.content.slice(0,120)+(n.content.length>120?'...':'')+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;padding:1px 5px;border:1px solid '+n.color+'30;border-radius:8px;color:'+n.color+'60">'+n.tag+'</span><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.2)">'+new Date(n.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span></div></div>').join('');
+}
+function addNote(){
+  document.getElementById('np-input').classList.add('show');
+  document.getElementById('np-title').value='';document.getElementById('np-content').value='';
+  document.getElementById('np-title').focus();
+}
+function cancelNote(){document.getElementById('np-input').classList.remove('show');}
+function saveNote(){
+  const title=document.getElementById('np-title').value.trim()||'Note '+new Date().toLocaleTimeString();
+  const content=document.getElementById('np-content').value.trim();
+  if(!content&&!title)return;
+  const note={id:Date.now(),title,content:content||'',color:noteColor,tag:activeNoteTag==='All'?'Ideas':activeNoteTag,pinned:false,ts:Date.now()};
+  notes.unshift(note);saveNotes();updateStats();renderNotepad();renderFullNotes();cancelNote();
+  showToast('📌 Note saved!');
+}
+function openNote(id){
+  const n=notes.find(x=>x.id===id);if(!n)return;
+  const newContent=prompt('Edit note:',n.content);
+  if(newContent!==null){n.content=newContent;n.ts=Date.now();saveNotes();renderNotepad();renderFullNotes();}
+}
+function delNote(id){notes=notes.filter(n=>n.id!==id);saveNotes();updateStats();renderNotepad();renderFullNotes();}
+function pinNote(e,id){e.preventDefault();const n=notes.find(x=>x.id===id);if(n){n.pinned=!n.pinned;saveNotes();renderNotepad();renderFullNotes();}return false;}
+function setNoteColor(c,el){noteColor=c;document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));el.classList.add('active');}
+function clearAllNotes(){if(confirm('Clear all notes?')){notes=[];saveNotes();updateStats();renderNotepad();renderFullNotes();}}
+function searchNotes(){renderNotepad();}
+
+// Full page notes
+function renderFullNotes(){
+  const el=document.getElementById('fn-grid');if(!el)return;
+  const s=(document.getElementById('fn-search')?.value||'').toLowerCase();
+  // Tag buttons
+  const tagEl=document.getElementById('fn-tags');
+  if(tagEl)tagEl.innerHTML=NOTE_TAGS.map(t=>'<button class="btn btn-sm btn-pk" style="opacity:'+(activeNoteTag===t?1:.35)+';font-size:8px;border-radius:10px;padding:3px 10px" onclick="setFNTag(\''+t+'\')">'+t+'</button>').join('');
+  let fil=notes.filter(n=>{const mT=activeNoteTag==='All'||n.tag===activeNoteTag;const mS=!s||n.title.toLowerCase().includes(s)||n.content.toLowerCase().includes(s);return mT&&mS;});
+  const pinned=fil.filter(n=>n.pinned);const rest=fil.filter(n=>!n.pinned);fil=[...pinned,...rest];
+  if(!fil.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;color:rgba(255,79,154,.18)"><div style="font-size:40px;margin-bottom:12px">📌</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">NO NOTES YET</div><div style="font-size:13px;margin-top:8px;color:rgba(200,230,240,.3)">Click + NEW NOTE to capture your first idea</div></div>';return;}
+  el.innerHTML=fil.map(n=>'<div onclick="openNote('+n.id+')" style="background:'+n.color+'08;border:1px solid '+n.color+'30;border-radius:4px;padding:14px;cursor:pointer;transition:all .2s;animation:fadeUp .3s ease;position:relative" onmouseover="this.style.borderColor=\''+n.color+'60\'" onmouseout="this.style.borderColor=\''+n.color+'30\'"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:8px">'+( n.pinned?'<span style="position:absolute;top:10px;right:30px;font-size:10px">📌</span>':'')+'<div style="font-size:13px;font-weight:700;color:'+n.color+';line-height:1.3;flex:1">'+n.title+'</div><button onclick="event.stopPropagation();delNote('+n.id+')" style="background:none;border:none;color:rgba(255,79,107,.35);cursor:pointer;font-size:13px;padding:0;flex-shrink:0">✕</button></div><div style="font-size:12px;color:rgba(200,230,240,.65);line-height:1.55;margin-bottom:10px;max-height:80px;overflow:hidden">'+n.content.slice(0,160)+(n.content.length>160?'...':'')+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;padding:2px 7px;border:1px solid '+n.color+'30;border-radius:8px;color:'+n.color+'70">'+n.tag+'</span><span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:rgba(200,230,240,.25)">'+new Date(n.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</span></div></div>').join('');
+}
+function setFNTag(t){activeNoteTag=t;renderFullNotes();renderNpTags();}
+
+// ── STATS ──────────────────────────────────────────────
+function updateStats(){
+  document.getElementById('s-mem').textContent=mems.length;
+  document.getElementById('s-notes').textContent=notes.length;
+  document.getElementById('s-trn').textContent=training.length;
+  document.getElementById('h-mem').textContent=mems.length+' nodes';
+  document.getElementById('mlc').textContent=training.length;
+  document.getElementById('ft-notes').textContent=notes.length;
+}
+
+// ── SETTINGS ───────────────────────────────────────────
+function setGemModel(){
+  const sel=document.getElementById('gem-model-sel');if(!sel)return;
+  GEM_MODEL_SEL=sel.value;localStorage.setItem('gem_model',sel.value);
+  // Sync with chat model selector
+  const aiSel=document.getElementById('ai-sel');if(aiSel)aiSel.value=sel.value;
+  const labels={'gemini-1.5-flash':'GEMINI 1.5 FLASH ⚡','gemini-1.5-pro':'GEMINI 1.5 PRO 🧠','gemini-2.0-flash':'GEMINI 2.0 FLASH 🚀'};
+  const el=document.getElementById('h-ai');if(el)el.textContent=labels[sel.value]||'GEMINI';
+  showToast('✓ Model set: '+(labels[sel.value]||sel.value));
+}
+function saveGem(){
+  const k=document.getElementById('gk').value.trim();if(!k)return;
+  GEM_KEY=k;localStorage.setItem('gk',k);
+  document.getElementById('kstat').textContent='✓ Gemini 2.5 Flash key saved! FREE AI is now active.';
+  document.getElementById('kstat').style.color='#00ff88';
+  document.getElementById('h-ai').textContent='GEMINI 1.5 FLASH ✓';
+  document.getElementById('ft-ai').textContent='GEMINI 1.5 FLASH FREE ✓';
+  showToast('✓ Gemini API key saved!');
+}
+function saveOR(){
+  const k=document.getElementById('ok').value.trim();if(!k)return;
+  OR_KEY=k;localStorage.setItem('ok',k);
+  showToast('✓ OpenRouter key saved!');
+}
+if(GEM_KEY){
+  document.getElementById('kstat').textContent='✓ Gemini key loaded. AI active.';
+  document.getElementById('kstat').style.color='#00ff88';
+  document.getElementById('h-ai').textContent='GEMINI 1.5 FLASH ✓';
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(0,8,18,.95);border:1px solid rgba(255,79,154,.4);color:var(--pink);font-family:\'Share Tech Mono\',monospace;font-size:11px;padding:8px 18px;border-radius:20px;z-index:9999;pointer-events:none;transition:opacity .3s;letter-spacing:1px';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.style.opacity='0',2500);
+}
+
+// ── 3D EARTH ───────────────────────────────────────────
+function initEarth(){
+  earthDone=true;const cv=document.getElementById('ec');const par=cv.parentElement;
+  const W=par.clientWidth,H=par.clientHeight;cv.width=W;cv.height=H;
+  const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(45,W/H,.1,1000);cam.position.z=2.8;
+  const rnd=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  rnd.setSize(W,H);rnd.setPixelRatio(Math.min(window.devicePixelRatio,2));rnd.setClearColor(0,0);
+  const sg=new THREE.BufferGeometry();const sv=[];
+  for(let i=0;i<5000;i++)sv.push((Math.random()-.5)*200,(Math.random()-.5)*200,(Math.random()-.5)*200);
+  sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
+  const stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.12,transparent:true,opacity:.7}));scene.add(stars);
+  const earth=new THREE.Mesh(new THREE.SphereGeometry(1,64,64),new THREE.MeshPhongMaterial({color:0x1a3a5c,emissive:0x0a1a2e,emissiveIntensity:.3,shininess:80}));scene.add(earth);
+  const wire=new THREE.Mesh(new THREE.SphereGeometry(1.002,32,32),new THREE.MeshBasicMaterial({color:0x00d4ff,wireframe:true,transparent:true,opacity:.055}));scene.add(wire);
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.08,64,64),new THREE.MeshPhongMaterial({color:0x00aaff,transparent:true,opacity:.07,side:THREE.BackSide})));
+  const ring=new THREE.Mesh(new THREE.RingGeometry(1.38,1.395,128),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:.28,side:THREE.DoubleSide}));ring.rotation.x=Math.PI/2.5;scene.add(ring);
+  [[0,.82,.57],[.62,.58,.52],[-.62,.52,.72],[.82,-.28,.52],[-.72,-.18,.68],[.3,.88,-.32],[.52,-.68,.52],[-.3,.72,-.58],[.72,.38,-.62],[-.8,.28,.52]].forEach((pos,i)=>{
+    const n=new THREE.Mesh(new THREE.SphereGeometry(.013,8,8),new THREE.MeshBasicMaterial({color:[0x00d4ff,0x00ff88,0xffd700,0xff4f9a,0xa855f7][i%5]}));
+    const v=new THREE.Vector3(...pos).normalize();n.position.copy(v);scene.add(n);
+  });
+  scene.add(new THREE.AmbientLight(0x223344,.8));const sun=new THREE.DirectionalLight(0x4488ff,1.5);sun.position.set(5,3,5);scene.add(sun);
+  let drag=false,prev={x:0,y:0},vel={x:0,y:0};
+  cv.addEventListener('mousedown',e=>{drag=true;prev={x:e.clientX,y:e.clientY};});
+  cv.addEventListener('mousemove',e=>{if(!drag)return;vel.x=(e.clientY-prev.y)*.005;vel.y=(e.clientX-prev.x)*.005;prev={x:e.clientX,y:e.clientY};});
+  cv.addEventListener('mouseup',()=>drag=false);cv.addEventListener('mouseleave',()=>drag=false);
+  cv.addEventListener('touchstart',e=>{prev={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+  cv.addEventListener('touchmove',e=>{vel.x=(e.touches[0].clientY-prev.y)*.005;vel.y=(e.touches[0].clientX-prev.x)*.005;prev={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+  cv.addEventListener('wheel',e=>{cam.position.z=Math.max(1.5,Math.min(5,cam.position.z+e.deltaY*.002));},{passive:true});
+  function loop(){requestAnimationFrame(loop);if(!drag){vel.x*=.95;vel.y*=.95;earth.rotation.y+=.0014;wire.rotation.y+=.0014;}earth.rotation.x+=vel.x;earth.rotation.y+=vel.y;wire.rotation.x+=vel.x;wire.rotation.y+=vel.y;ring.rotation.z+=.001;stars.rotation.y+=.00005;rnd.render(scene,cam);}
+  loop();
+  window.addEventListener('resize',()=>{const W2=par.clientWidth,H2=par.clientHeight;cam.aspect=W2/H2;cam.updateProjectionMatrix();rnd.setSize(W2,H2);});
+}
+
+// ── INIT ───────────────────────────────────────────────
+// Restore saved model on load
+const savedModel=localStorage.getItem('gem_model')||'gemini-1.5-flash';
+GEM_MODEL_SEL=savedModel;
+const aiSelEl=document.getElementById('ai-sel');if(aiSelEl){aiSelEl.value=savedModel;}
+const gmSelEl=document.getElementById('gem-model-sel');if(gmSelEl){gmSelEl.value=savedModel;}
+const modelLabels={'gemini-1.5-flash':'GEMINI 1.5 FLASH ⚡','gemini-1.5-pro':'GEMINI 1.5 PRO 🧠','gemini-2.0-flash':'GEMINI 2.0 FLASH 🚀','openrouter':'LLAMA FREE'};
+const hAi=document.getElementById('h-ai');if(hAi&&GEM_KEY)hAi.textContent=modelLabels[savedModel]||'GEMINI';
+renderMem();updateStats();renderNotepad();renderFullNotes();renderNpTags();
+setTimeout(()=>{renderRA();renderSecAg();},100);
+</script>
+</body>
+</html>
